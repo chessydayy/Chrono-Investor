@@ -496,6 +496,34 @@
     </div>
 
     <script>
+        // ==========================================
+// 🔊 オーディオ（BGM・効果音）システム
+// ==========================================
+const bgm = new Audio('./bgm.mp3');
+bgm.loop = true;       // BGMなのでループ再生
+bgm.volume = 0.25;     // 少し控えめの音量に設定
+
+const soundNews = new Audio('./news.mp3');
+const soundSuccess = new Audio('./success.mp3');
+const soundCash = new Audio('./cash.mp3');
+
+// 効果音の初期音量調整（お好みで調整してください）
+soundNews.volume = 0.4;
+soundSuccess.volume = 0.4;
+soundCash.volume = 0.5;
+
+// ブラウザの自動再生ブロックを回避する仕組み
+let isBgmStarted = false;
+
+// プレイヤーが画面を最初にクリックした瞬間にBGMをスタート
+document.addEventListener('click', () => {
+    if (!isBgmStarted) {
+        bgm.play().catch(error => {
+            console.log("BGMの自動再生がブロックされました:", error);
+        });
+        isBgmStarted = true;
+    }
+});
         let game = {
             cash: 1000,
             timeLeft: 180, 
