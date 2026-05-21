@@ -506,12 +506,14 @@ bgm.volume = 0.25;     // 少し控えめの音量に設定
 const soundNews = new Audio('./news.mp3');
 const soundSuccess = new Audio('./success.mp3');
 const soundCash = new Audio('./cash.mp3');
-
+const soundOverdrive = new Audio('overdrive.mp3');
+        
 // 効果音の初期音量調整（お好みで調整してください）
 soundNews.volume = 0.4;
 soundSuccess.volume = 0.4;
 soundCash.volume = 0.5;
-
+soundOverdrive.volume = 0.4;
+        
 // ブラウザの自動再生ブロックを回避する仕組み
 let isBgmStarted = false;
 
@@ -637,15 +639,17 @@ document.addEventListener('click', () => {
         }
 
         function buyShop(type) {
-            const shop = game.shops[type];
-            if (game.cash < shop.cost || game.isOver) return;
-            game.cash -= shop.cost;
-            shop.count++;
-            shop.cost = Math.round(shop.cost * 1.15);
-            recalculatePPS();
-            triggerBump();
-            updateUI();
-        }
+    const shop = game.shops[type];
+    if (game.cash < shop.cost || game.isOver) return;
+    game.cash -= shop.cost;
+    soundCash.currentTime = 0; // 👈 ここに足す！
+    soundCash.play();        // 👈 ここに足す！
+    shop.count++;
+    shop.cost = Math.round(shop.cost * 1.15);
+    recalculatePPS();
+    triggerBump();
+    updateUI();
+}
 
         function upgradeShop(type) {
             const shop = game.shops[type];
@@ -748,6 +752,11 @@ document.addEventListener('click', () => {
                     newsEl.className = 'news-ticker fever';
                     newsEl.innerText = "✨🎉 OVERDRIVE: 全宇宙バブル発生！！全アイテム価格超高騰フィーバー！！ 🎉✨";
                     document.getElementById('fever-overlay').classList.add('active');
+
+                    
+                    soundOverdrive.currentTime = 0;
+                    soundOverdrive.play();
+                    
                 } else if (rand < 0.22) {
                     const items = ['apple', 'shoes', 'jewel', 'car', 'gold', 'mansion'];
                     const pickedItem = items[Math.floor(Math.random() * items.length)];
@@ -764,6 +773,8 @@ document.addEventListener('click', () => {
                     else if (pickedItem === 'mansion') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "🏢 CRITICAL: 都心再開発により、超高級マンションの価格が大バブル！" : "🏢 CRITICAL: 不動産増税の可決により、マンション売り浴びせパニック！"; }
                 }
             }
+            soundNews.currentTime = 0;
+            soundNews.play();
 
             for (let key in game.items) {
                 const item = game.items[key];
@@ -835,6 +846,8 @@ document.addEventListener('click', () => {
 
         function endGame() {
             game.isOver = true;
+            soundSuccess.currentTime = 0;
+            soundSuccess.play();
             clearInterval(gameClock);
             document.getElementById('fever-overlay').classList.remove('active');
 
