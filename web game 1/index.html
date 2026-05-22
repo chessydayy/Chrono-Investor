@@ -495,375 +495,217 @@
         </div>
     </div>
 
-    <script>
-        // ==========================================
-// 🔊 オーディオ（BGM・効果音）システム
-// ==========================================
+   <script>
 const bgm = new Audio('./bgm.mp3');
-bgm.loop = true;       // BGMなのでループ再生
-bgm.volume = 0.25;     // 少し控えめの音量に設定
+bgm.loop = true;
+bgm.volume = 0.25;
 
 const soundNews = new Audio('./news.mp3');
 const soundSuccess = new Audio('./success.mp3');
 const soundCash = new Audio('./cash.mp3');
 const soundOverdrive = new Audio('overdrive.mp3');
-        
-// 効果音の初期音量調整（お好みで調整してください）
+
 soundNews.volume = 0.4;
 soundSuccess.volume = 0.4;
 soundCash.volume = 0.5;
 soundOverdrive.volume = 0.4;
-        
-// ブラウザの自動再生ブロックを回避する仕組み
-let isBgmStarted = false;
 
-// プレイヤーが画面を最初にクリックした瞬間にBGMをスタート
+let isBgmStarted = false;
 document.addEventListener('click', () => {
     if (!isBgmStarted) {
-        bgm.play().catch(error => {
-            console.log("BGMの自動再生がブロックされました:", error);
-        });
+        bgm.play().catch(()=>{});
         isBgmStarted = true;
     }
 });
-        let game = {
-            cash: 1000,
-            timeLeft: 180, 
-            chosenMinutes: 3, 
-            autoPPS: 0,
-            isOver: false,
-            loanDebt: 0, 
-            feverTicks: 0,
-            activeEvent: { item: null, type: null, duration: 0 },
-            items: {
-                apple: { price: 100, lastPrice: 100, base: 100, min: 20, max: 400, hold: 0, range: 0.06 },
-                shoes: { price: 300, lastPrice: 300, base: 300, min: 60, max: 1200, hold: 0, range: 0.14 },
-                jewel: { price: 1000, lastPrice: 1000, base: 1000, min: 200, max: 5000, hold: 0, range: 0.35 },
-                car: { price: 5000, lastPrice: 5000, base: 5000, min: 1200, max: 25000, hold: 0, range: 0.28 },
-                gold: { price: 30000, lastPrice: 30000, base: 30000, min: 10000, max: 90000, hold: 0, range: 0.12 },
-                mansion: { price: 200000, lastPrice: 200000, base: 200000, min: 40000, max: 800000, hold: 0, range: 0.40 }
-            },
-            shops: {
-                vending: { count: 0, cost: 200, basePps: 10, ugLv: 1, ugCost: 400 },
-                arcade: { count: 0, cost: 1000, basePps: 60, ugLv: 1, ugCost: 2500 },
-                store: { count: 0, cost: 5000, basePps: 400, ugLv: 1, ugCost: 15000 },
-                tech: { count: 0, cost: 30000, basePps: 3000, ugLv: 1, ugCost: 90000 },
-                space: { count: 0, cost: 150000, basePps: 20000, ugLv: 1, ugCost: 450000 },
-                time: { count: 0, cost: 800000, basePps: 120000, ugLv: 1, ugCost: 2400000 }
-            }
-        };
 
-        let gameClock = null;
-        const newsEl = document.getElementById('news-bar');
+let game = {
+    cash: 1000,
+    timeLeft: 180,
+    chosenMinutes: 3,
+    autoPPS: 0,
+    isOver: false,
+    loanDebt: 0,
+    feverTicks: 0,
+    activeEvent: { item: null, type: null, duration: 0 },
 
-        // 説明モーダルの開閉関数
-        function toggleHelpModal(show) {
-            const modal = document.getElementById('help-modal');
-            if (show) {
-                modal.classList.add('active');
-            } else {
-                modal.classList.remove('active');
-            }
-        }
+    items: {
+        apple: { price: 100, lastPrice: 100, base: 100, min: 20, max: 400, hold: 0, range: 0.06, trait: "stable", holdTime: 0 },
+        shoes: { price: 300, lastPrice: 300, base: 300, min: 60, max: 1200, hold: 0, range: 0.14, trait: "mid" , holdTime: 0 },
+        jewel: { price: 1000, lastPrice: 1000, base: 1000, min: 200, max: 5000, hold: 0, range: 0.35, trait: "chaos", holdTime: 0 },
+        car: { price: 5000, lastPrice: 5000, base: 5000, min: 1200, max: 25000, hold: 0, range: 0.28, trait: "spike", holdTime: 0 },
+        gold: { price: 30000, lastPrice: 30000, base: 30000, min: 10000, max: 90000, hold: 0, range: 0.12, trait: "safe", holdTime: 0 },
+        mansion: { price: 200000, lastPrice: 200000, base: 200000, min: 40000, max: 800000, hold: 0, range: 0.40, trait: "chaos", holdTime: 0 }
+    },
 
-        // クリック時の光の粒子エフェクト
-        document.body.addEventListener('click', (e) => {
-            if (game.isOver || !gameClock) return;
-            if (e.target.closest('#help-modal') || e.target.closest('.menu-box')) return;
+    shops: {
+        vending: { count: 0, cost: 200, basePps: 10, ugLv: 1, ugCost: 400 },
+        arcade: { count: 0, cost: 1000, basePps: 60, ugLv: 1, ugCost: 2500 },
+        store: { count: 0, cost: 5000, basePps: 400, ugLv: 1, ugCost: 15000 },
+        tech: { count: 0, cost: 30000, basePps: 3000, ugLv: 1, ugCost: 90000 },
+        space: { count: 0, cost: 150000, basePps: 20000, ugLv: 1, ugCost: 450000 },
+        time: { count: 0, cost: 800000, basePps: 120000, ugLv: 1, ugCost: 2400000 }
+    }
+};
 
-            for(let i=0; i<6; i++) {
-                const p = document.createElement('div');
-                p.className = 'click-particle';
-                p.innerText = '$';
-                p.style.left = e.pageX + 'px';
-                p.style.top = e.pageY + 'px';
-                p.style.setProperty('--mx', (Math.random() - 0.5) * 80 + 'px');
-                p.style.setProperty('--my', (Math.random() - 0.5) * 80 - 40 + 'px');
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 500);
-            }
-        });
+let gameClock = null;
+const newsEl = document.getElementById('news-bar');
 
-        function triggerBump() {
-            const el = document.getElementById('display-cash');
-            el.classList.remove('bump-active');
-            void el.offsetWidth; 
-            el.classList.add('bump-active');
-        }
+function toggleHelpModal(show){
+    const modal = document.getElementById('help-modal');
+    modal.classList.toggle('active', show);
+}
 
-        function startGame(minutes) {
-            game.chosenMinutes = minutes;
-            game.timeLeft = minutes * 60;
-            
-            const modeNames = { 
-                1: "CHRONO : 1-MIN OVERDRIVE", 
-                2: "CHRONO : 2-MIN QUICK", 
-                3: "CHRONO : 3-MIN STANDARD", 
-                5: "CHRONO : 5-MIN LONG", 
-                10: "CHRONO : 10-MIN GALAXY" 
-            };
-            document.getElementById('game-brand').innerText = modeNames[minutes];
+document.body.addEventListener('click', (e) => {
+    if (game.isOver || !gameClock) return;
+    if (e.target.closest('#help-modal') || e.target.closest('.menu-box')) return;
 
-            document.getElementById('start-screen').classList.add('hide');
-            document.getElementById('game-container').style.display = 'flex';
+    for(let i=0;i<6;i++){
+        const p=document.createElement('div');
+        p.className='click-particle';
+        p.innerText='$';
+        p.style.left=e.pageX+'px';
+        p.style.top=e.pageY+'px';
+        p.style.setProperty('--mx',(Math.random()-0.5)*80+'px');
+        p.style.setProperty('--my',(Math.random()-0.5)*80+'px');
+        document.body.appendChild(p);
+        setTimeout(()=>p.remove(),500);
+    }
+});
 
-            newsEl.className = 'news-ticker';
-            newsEl.innerText = `MARKET LIVE: ${minutes}分間のタイムラインに接続しました。`;
+function triggerBump(){
+    const el=document.getElementById('display-cash');
+    el.classList.remove('bump-active');
+    void el.offsetWidth;
+    el.classList.add('bump-active');
+}
 
-            updateUI();
-            gameClock = setInterval(tickGame, 1000);
-        }
+function startGame(minutes){
+    game.chosenMinutes=minutes;
+    game.timeLeft=minutes*60;
 
-        function trade(itemKey, type) {
-            if (game.isOver) return;
-            const item = game.items[itemKey];
-            if (type === 'buy' && game.cash >= item.price) {
-                let count = Math.floor(game.cash / item.price);
-                game.cash -= count * item.price;
-                item.hold += count;
-                animatePrice(itemKey, 'scale(0.93)');
-                triggerBump();
-            } else if (type === 'sell' && item.hold > 0) {
-                game.cash += item.hold * item.price;
-                item.hold = 0;
-                animatePrice(itemKey, 'scale(1.07)');
-                triggerBump();
-            }
-            updateUI();
-        }
+    const modeNames={
+        1:"CHRONO 1",
+        2:"CHRONO 2",
+        3:"CHRONO 3",
+        5:"CHRONO 5",
+        10:"CHRONO 10"
+    };
 
-        function animatePrice(itemKey, scaleStr) {
-            let el = document.getElementById(`price-${itemKey}`);
-            el.style.transform = scaleStr;
-            setTimeout(() => el.style.transform = 'scale(1)', 80);
-        }
+    document.getElementById('game-brand').innerText=modeNames[minutes];
+    document.getElementById('start-screen').classList.add('hide');
+    document.getElementById('game-container').style.display='flex';
 
-        function buyShop(type) {
-    const shop = game.shops[type];
-    if (game.cash < shop.cost || game.isOver) return;
-    game.cash -= shop.cost;
-    soundCash.currentTime = 0; // 👈 ここに足す！
-    soundCash.play();        // 👈 ここに足す！
-    shop.count++;
-    shop.cost = Math.round(shop.cost * 1.15);
-    recalculatePPS();
-    triggerBump();
+    gameClock=setInterval(tickGame,1000);
     updateUI();
 }
 
-        function upgradeShop(type) {
-            const shop = game.shops[type];
-            if (game.cash < shop.ugCost || game.isOver) return;
-            game.cash -= shop.ugCost;
-            shop.ugLv++;
-            shop.ugCost = Math.round(shop.ugCost * 3.0);
-            newsEl.className = 'news-ticker up';
-            newsEl.innerText = `🛠️ DEVELOPMENT: 施設の技術革新に成功！出力効率がアップしました。`;
-            recalculatePPS();
-            triggerBump();
-            updateUI();
-        }
+function trade(key,type){
+    if(game.isOver) return;
+    const item=game.items[key];
 
-        function recalculatePPS() {
-            const syn_vending = (game.shops.store.count >= 1); 
-            const syn_arcade  = (game.shops.vending.count >= 3); 
-            const syn_space   = (game.shops.tech.count >= 3); 
-            const syn_time    = (game.shops.space.count >= 2); 
+    if(type==='buy' && game.cash>=item.price){
+        const c=Math.floor(game.cash/item.price);
+        game.cash-=c*item.price;
+        item.hold+=c;
+        item.holdTime=0;
+        triggerBump();
+    }
 
-            document.getElementById('row-vending').className = syn_vending ? 'shop-row synergy-active' : 'shop-row';
-            document.getElementById('row-arcade').className = syn_arcade ? 'shop-row synergy-active' : 'shop-row';
-            document.getElementById('row-space').className = syn_space ? 'shop-row synergy-active' : 'shop-row';
-            document.getElementById('row-time').className = syn_time ? 'shop-row synergy-active' : 'shop-row';
+    if(type==='sell' && item.hold>0){
+        game.cash+=item.hold*item.price;
+        item.hold=0;
+        item.holdTime=0;
+        triggerBump();
+    }
 
-            let total = 0;
+    updateUI();
+}
 
-            let vPps = game.shops.vending.basePps * game.shops.vending.ugLv;
-            if (syn_vending) vPps *= 5;
-            total += game.shops.vending.count * vPps;
+function buyShop(type){
+    const s=game.shops[type];
+    if(game.cash<s.cost) return;
+    game.cash-=s.cost;
+    s.count++;
+    s.cost=Math.floor(s.cost*1.15);
+    recalcPPS();
+    updateUI();
+}
 
-            let aPps = game.shops.arcade.basePps * game.shops.arcade.ugLv;
-            if (syn_arcade) aPps *= 2;
-            total += game.shops.arcade.count * aPps;
+function upgradeShop(type){
+    const s=game.shops[type];
+    if(game.cash<s.ugCost) return;
+    game.cash-=s.ugCost;
+    s.ugLv++;
+    s.ugCost=Math.floor(s.ugCost*3);
+    recalcPPS();
+    updateUI();
+}
 
-            total += game.shops.store.count * game.shops.store.basePps * game.shops.store.ugLv;
-            total += game.shops.tech.count * game.shops.tech.basePps * game.shops.tech.ugLv;
+function recalcPPS(){
+    let total=0;
+    for(let k in game.shops){
+        const s=game.shops[k];
+        total+=s.count*s.basePps*s.ugLv;
+    }
+    game.autoPPS=total;
+}
 
-            let sPps = game.shops.space.basePps * game.shops.space.ugLv;
-            if (syn_space) sPps *= 2;
-            total += game.shops.space.count * sPps;
+function tickGame(){
+    if(game.isOver) return;
 
-            let tPps = game.shops.time.basePps * game.shops.time.ugLv;
-            if (syn_time) tPps *= 1.5;
-            total += game.shops.time.count * tPps;
+    game.cash+=game.autoPPS;
+    game.timeLeft--;
 
-            game.autoPPS = total;
-        }
+    for(let k in game.items){
+        const it=game.items[k];
 
-        function handleLoan() {
-            if (game.isOver) return;
+        if(it.hold>0) it.holdTime++; else it.holdTime=0;
 
-            if (game.loanDebt === 0) {
-                game.loanDebt = 3000;
-                game.cash += 3000;
-                newsEl.className = 'news-ticker down';
-                newsEl.innerText = "🚨 闇金融資：3,000円を調達。秒利10%のカウントダウンが作動中！";
-                triggerBump();
-            } else {
-                if (game.cash >= game.loanDebt) {
-                    game.cash -= game.loanDebt;
-                    game.loanDebt = 0;
-                    newsEl.className = 'news-ticker up';
-                    newsEl.innerText = "🛡️ 完済：債務の早期履行を完了。違法金利が停止しました。";
-                    triggerBump();
-                } else {
-                    newsEl.className = 'news-ticker down';
-                    newsEl.innerText = "❌ 却下：手元資金が足りません！利息で破滅する前に稼いでください。";
-                }
-            }
-            updateUI();
-        }
+        let base=(Math.random()-0.5)*it.range;
 
-        function tickGame() {
-            if (game.isOver) return;
-            game.cash += game.autoPPS;
-            game.timeLeft--;
+        let mod=1;
+        if(it.trait==='stable') mod=0.5;
+        if(it.trait==='mid') mod=1;
+        if(it.trait==='spike') mod=1.4;
+        if(it.trait==='chaos') mod=1.8;
+        if(it.trait==='safe') mod=0.3;
 
-            if (game.loanDebt > 0) {
-                game.loanDebt = Math.round(game.loanDebt * 1.10) + 50;
-            }
+        let change=base*mod;
 
-            const mins = Math.floor(game.timeLeft / 60).toString().padStart(2, '0');
-            const secs = (game.timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById('display-timer').innerText = `${mins}:${secs}`;
+        if(it.holdTime>=10) it.price*=1.02;
+        if(it.holdTime>=20) it.price*=1.05;
 
-            if (game.feverTicks > 0) {
-                game.feverTicks--;
-                if (game.feverTicks <= 0) { 
-                    newsEl.className = 'news-ticker'; newsEl.innerText = "SYSTEM: フィーバータイムが終了しました。"; 
-                    document.getElementById('fever-overlay').classList.remove('active'); 
-                }
-            } else if (game.activeEvent.duration > 0) {
-                game.activeEvent.duration--;
-                if (game.activeEvent.duration <= 0) { game.activeEvent.item = null; game.activeEvent.type = null; newsEl.className = 'news-ticker'; newsEl.innerText = "SYSTEM: 通常レートに移行。"; }
-            } else {
-                const rand = Math.random();
-                if (rand < 0.04) {
-                    game.feverTicks = 8;
-                    newsEl.className = 'news-ticker fever';
-                    newsEl.innerText = "✨🎉 OVERDRIVE: 全宇宙バブル発生！！全アイテム価格超高騰フィーバー！！ 🎉✨";
-                    document.getElementById('fever-overlay').classList.add('active');
+        it.price=Math.max(it.min,Math.min(it.max,Math.floor(it.price*(1+change))));
+    }
 
-                    
-                    soundOverdrive.currentTime = 0;
-                    soundOverdrive.play();
-                    
-                } else if (rand < 0.22) {
-                    const items = ['apple', 'shoes', 'jewel', 'car', 'gold', 'mansion'];
-                    const pickedItem = items[Math.floor(Math.random() * items.length)];
-                    const isUp = Math.random() > 0.45;
-                    game.activeEvent.item = pickedItem;
-                    game.activeEvent.type = isUp ? 'UP' : 'DOWN';
-                    game.activeEvent.duration = 6;
+    updateUI();
 
-                    if (pickedItem === 'apple') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "🍎 NEWS: 高級ブランドりんごのブーム到来。価格急騰。" : "🍎 NEWS: りんご大豊作につき市場価格が暴落。"; }
-                    else if (pickedItem === 'shoes') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "👟 NEWS: 限定スニーカーのプレ値オークションが白熱、暴騰中。" : "👟 NEWS: シューズ素材のリコール発表で価値急落。"; }
-                    else if (pickedItem === 'jewel') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "💎 CRITICAL: 宝石から未知のエネルギー。価格が急上昇！" : "💎 CRITICAL: 宝石市場に深刻な呪いの噂。大暴落。"; }
-                    else if (pickedItem === 'car') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "🏎️ NEWS: 次世代エコスーパーカー発表！外車の価値が爆上がり！" : "🏎️ NEWS: 排ガス規制強化の噂でガソリンスポーツカーが下落。"; }
-                    else if (pickedItem === 'gold') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "👑 ALERT: 世界情勢の不安化に伴い、安全資産の『金』に買いが殺到！" : "👑 ALERT: 巨大金鉱山が新たに発見され、金の市場価値が下落。"; }
-                    else if (pickedItem === 'mansion') { newsEl.className = isUp ? 'news-ticker up' : 'news-ticker down'; newsEl.innerText = isUp ? "🏢 CRITICAL: 都心再開発により、超高級マンションの価格が大バブル！" : "🏢 CRITICAL: 不動産増税の可決により、マンション売り浴びせパニック！"; }
-                }
-            }
-            soundNews.currentTime = 0;
-            soundNews.play();
+    if(game.timeLeft<=0) endGame();
+}
 
-            for (let key in game.items) {
-                const item = game.items[key];
-                item.lastPrice = item.price;
-                let changePercent = (Math.random() - 0.46) * 2 * item.range;
-                if (game.feverTicks > 0) changePercent = Math.abs(changePercent) + 0.20;
-                else if (game.activeEvent.item === key) changePercent += (game.activeEvent.type === 'UP' ? item.range * 1.5 : -item.range * 1.5);
-                changePercent += (item.base - item.price) / item.base * 0.05;
-                item.price = Math.round(item.price * (1 + changePercent));
-                if (item.price < item.min) item.price = item.min;
-                if (item.price > item.max) item.price = item.max;
-            }
+function updateUI(){
+    document.getElementById('display-cash').innerText=game.cash.toLocaleString()+"円";
+    document.getElementById('display-pps').innerText=game.autoPPS.toLocaleString()+"円/秒";
 
-            updateUI();
-            if (game.timeLeft <= 0) endGame();
-        }
+    for(let k in game.items){
+        const it=game.items[k];
+        document.getElementById(`price-${k}`).innerText=it.price.toLocaleString();
+        document.getElementById(`hold-${k}`).innerText=it.hold;
+    }
+}
 
-        function updateUI() {
-            document.getElementById('display-cash').innerText = game.cash.toLocaleString() + "円";
-            document.getElementById('display-pps').innerText = game.autoPPS.toLocaleString() + "円/秒";
+function endGame(){
+    game.isOver=true;
+    clearInterval(gameClock);
 
-            const debtBox = document.getElementById('debt-box');
-            const loanBtn = document.getElementById('loan-btn');
-            if (game.loanDebt > 0) {
-                debtBox.style.display = 'block';
-                document.getElementById('display-debt').innerText = game.loanDebt.toLocaleString() + "円";
-                loanBtn.innerText = `💰 借金返済：${game.loanDebt.toLocaleString()}円を支払う`;
-                loanBtn.style.background = "rgba(220, 38, 38, 0.25)";
-                loanBtn.style.color = "#fff";
-                loanBtn.style.borderStyle = "solid";
-            } else {
-                debtBox.style.display = 'none';
-                loanBtn.innerText = `⚠️ 緊急融資：3,000円調達（※秒利10%＋50円の暴利）`;
-                loanBtn.style.background = "rgba(251, 113, 133, 0.05)";
-                loanBtn.style.color = "var(--danger)";
-                loanBtn.style.borderStyle = "dashed";
-            }
+    let net=game.cash;
+    for(let k in game.items){
+        net+=game.items[k].hold*game.items[k].price;
+    }
 
-            for (let key in game.items) {
-                const item = game.items[key];
-                const priceEl = document.getElementById(`price-${key}`);
-                const percentEl = document.getElementById(`trend-${key}`);
-                document.getElementById(`hold-${key}`).innerText = item.hold.toLocaleString();
-                const rawPercent = (((item.price - item.lastPrice) * 100) / item.lastPrice).toFixed(1);
-                priceEl.innerText = item.price.toLocaleString();
-
-                if (rawPercent > 0) { percentEl.innerText = `+${rawPercent}% ▲`; percentEl.style.color = "var(--success)"; priceEl.style.color = "var(--success)"; }
-                else if (rawPercent < 0) { percentEl.innerText = `${rawPercent}% ▼`; percentEl.style.color = "var(--danger)"; priceEl.style.color = "var(--danger)"; }
-                else { percentEl.innerText = `±0.0%`; percentEl.style.color = "var(--text-muted)"; priceEl.style.color = "white"; }
-            }
-
-            for (let key in game.shops) {
-                const shop = game.shops[key];
-                document.getElementById(`count-${key}`).innerText = `×${shop.count}`;
-                document.getElementById(`shop-${key}`).innerText = `購入: ${shop.cost.toLocaleString()}円`;
-                document.getElementById(`ug-${key}`).innerText = `強化: ${shop.ugCost.toLocaleString()}円 (Lv.${shop.ugLv})`;
-                
-                let currentEff = shop.basePps * shop.ugLv;
-                if(key==='vending' && game.shops.store.count>=1) currentEff *= 5;
-                if(key==='arcade' && game.shops.vending.count>=3) currentEff *= 2;
-                if(key==='space' && game.shops.tech.count>=3) currentEff *= 2;
-                if(key==='time' && game.shops.space.count>=2) currentEff *= 1.5;
-
-                document.getElementById(`eff-${key}`).innerText = `+${currentEff.toLocaleString()}円/秒 (1台あたり)`;
-                document.getElementById(`shop-${key}`).disabled = (game.cash < shop.cost);
-                document.getElementById(`ug-${key}`).disabled = (game.cash < shop.ugCost);
-            }
-        }
-
-        function endGame() {
-            game.isOver = true;
-            soundSuccess.currentTime = 0;
-            soundSuccess.play();
-            clearInterval(gameClock);
-            document.getElementById('fever-overlay').classList.remove('active');
-
-            let netWorth = game.cash;
-            for (let key in game.items) netWorth += game.items[key].hold * game.items[key].price;
-            
-            if (game.loanDebt > 0) { 
-                netWorth -= game.loanDebt; 
-                const summaryEl = document.getElementById('loan-summary');
-                summaryEl.style.display = "block";
-                summaryEl.innerText = `（うち未返済の闇金債務：-${game.loanDebt.toLocaleString()}円を強制徴収）`; 
-            }
-
-            document.getElementById('final-money').innerText = netWorth.toLocaleString();
-            document.getElementById('result-screen').classList.add('active');
-        }
-    </script>
+    document.getElementById('final-money').innerText=net.toLocaleString();
+    document.getElementById('result-screen').classList.add('active');
+}
+</script>
 </body>
 </html>
