@@ -1,608 +1,226 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="favicon.jpg" type="image/jpeg">
-    <title>CHRONO INVESTOR : OVERDRIVE</title>
-    <style>
-        :root {
-            --bg-deep: #05070f;
-            --bg-panel: rgba(13, 17, 33, 0.75);
-            --border-neon: #1e293b;
-            --text-main: #ffffff;
-            --text-muted: #64748b;
-            --color-apple: #ff4a4a;
-            --color-shoes: #3b82f6;
-            --color-jewel: #a855f7;
-            --color-car: #ec4899;
-            --color-gold: #f59e0b;
-            --color-mansion: #10b981;
-            --success: #00ff88;
-            --success-glow: rgba(0, 255, 136, 0.3);
-            --danger: #ff3366;
-            --danger-glow: rgba(255, 51, 102, 0.3);
-            --warning: #ffb700;
-            --fever: #ffe066;
+python3 << 'PYEOF'
+with open('/mnt/user-data/outputs/index.html', 'r') as f:
+    content = f.read()
+
+# ── 1. CSS追加（</style>の直前）──────────────────────────────
+gacha_css = """
+        /* ガチャパネル */
+        .gacha-panel { background: var(--bg-panel); border: 1px solid #1e293b; border-radius: 16px; padding: 16px; flex-shrink: 0; }
+        .gacha-title { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 10px; }
+        .gacha-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+        .btn-gacha {
+            border: 1px solid #1e293b; border-radius: 8px; padding: 7px 4px;
+            font-size: 10px; font-weight: 900; cursor: pointer; color: white;
+            transition: all 0.2s; text-align: center; line-height: 1.4;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Consolas', 'Courier New', monospace, sans-serif; user-select: none; }
-        body {
-            background-color: var(--bg-deep);
-            background-image: linear-gradient(rgba(18, 24, 48, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(18, 24, 48, 0.2) 1px, transparent 1px);
-            background-size: 40px 40px;
-            color: var(--text-main); display: flex; justify-content: center; align-items: center;
-            width: 100vw; height: 100vh; overflow: hidden; padding: 20px;
-        }
-        .click-particle {
-            position: absolute; pointer-events: none; color: var(--success);
-            font-weight: 900; font-size: 14px; animation: particleAnim 0.5s ease-out forwards; z-index: 999;
-        }
-        @keyframes particleAnim {
-            0% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(calc(-50% + var(--mx)), calc(-50% + var(--my))) scale(0.5); opacity: 0; }
-        }
-        .bump-target { transition: transform 0.1s ease; }
-        .bump-active { animation: textBump 0.15s ease-in-out; }
-        @keyframes textBump {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); text-shadow: 0 0 25px var(--success); }
-        }
-        #fever-overlay {
+        .btn-gacha:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.2); }
+        .btn-gacha:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+        .btn-gacha.tier-s { background: linear-gradient(135deg, #1e3a5f, #2563eb); border-color: #3b82f6; }
+        .btn-gacha.tier-m { background: linear-gradient(135deg, #3b1f5e, #7c3aed); border-color: #a855f7; }
+        .btn-gacha.tier-l { background: linear-gradient(135deg, #7f1d1d, #dc2626); border-color: #f87171; box-shadow: 0 0 8px rgba(220,38,38,0.3); }
+
+        /* ガチャ演出オーバーレイ */
+        #gacha-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(255, 51, 102, 0.15); display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; z-index: 150; transition: opacity 0.3s;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 250;
         }
-        #fever-overlay.active { opacity: 1; animation: flashBg 0.4s infinite alternate; }
-        .fever-text {
-            font-size: 72px; font-weight: 900; color: var(--fever); letter-spacing: 12px;
-            text-shadow: 0 0 40px rgba(255,224,102,0.9); transform: scale(0.3); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        #gacha-overlay.active { opacity: 1; pointer-events: auto; }
+        .gacha-result-tier { font-size: 13px; letter-spacing: 4px; color: var(--text-muted); margin-bottom: 8px; }
+        .gacha-result-name { font-size: 32px; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px; text-align: center; max-width: 600px; }
+        .gacha-result-desc { font-size: 14px; color: #94a3b8; margin-bottom: 30px; text-align: center; max-width: 500px; line-height: 1.6; }
+        .gacha-result-badge {
+            font-size: 64px; margin-bottom: 20px;
+            animation: gachaBadge 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        #fever-overlay.active .fever-text { transform: scale(1); }
-        @keyframes flashBg { 0% { background: rgba(255, 183, 0, 0.05); } 100% { background: rgba(255, 51, 102, 0.2); } }
+        @keyframes gachaBadge { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .btn-gacha-close { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px 30px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+        .btn-gacha-close:hover { background: #334155; }
+"""
+content = content.replace('    </style>', gacha_css + '    </style>')
 
-        #start-screen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: var(--bg-deep);
-            background-image: linear-gradient(rgba(18, 24, 48, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(18, 24, 48, 0.3) 1px, transparent 1px);
-            background-size: 40px 40px;
-            display: flex; justify-content: center; align-items: center;
-            z-index: 200; transition: opacity 0.4s; padding: 40px;
-        }
-        #start-screen.hide { opacity: 0; pointer-events: none; }
-        .menu-box {
-            background: var(--bg-panel); border: 1px solid #334155; border-radius: 24px;
-            padding: 40px; width: 450px; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px); display: flex; flex-direction: column; justify-content: center;
-        }
-        .menu-logo { font-size: 28px; font-weight: 900; letter-spacing: 5px; color: var(--warning); text-shadow: 0 0 15px rgba(255, 183, 0, 0.4); margin-bottom: 5px; }
-        .menu-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 25px; }
-        .mode-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .btn-mode {
-            background: rgba(30, 41, 59, 0.6); border: 1px solid #1e293b; color: white;
-            padding: 14px 20px; border-radius: 12px; font-size: 14px; font-weight: 800; text-align: left;
-            cursor: pointer; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center;
-        }
-        .btn-mode:hover { background: #1e1b4b; border-color: #4338ca; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(67, 56, 202, 0.3); }
-        .btn-mode span.time-badge { background: #312e81; color: #a5b4fc; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-        .btn-mode:hover span.time-badge { background: #4338ca; color: white; }
-        .btn-trigger-help {
-            background: transparent; border: 1px dashed #475569; color: #94a3b8;
-            padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer;
-            transition: all 0.2s; width: 100%; text-align: center; letter-spacing: 1px;
-        }
-        .btn-trigger-help:hover { background: rgba(148, 163, 184, 0.08); border-color: #94a3b8; color: white; }
+# ── 2. HTML追加（ガチャパネルをside-panel内のbtn-loanの後に追加）──
+gacha_html = """
+                <!-- ガチャパネル -->
+                <div class="gacha-panel" style="margin-top:8px;">
+                    <div class="gacha-title">🎰 QUANTUM GACHA</div>
+                    <div class="gacha-grid">
+                        <button class="btn-gacha tier-s" id="gacha-10k"   onclick="pullGacha(10000)"  >🎲<br>1万円<br>ガチャ</button>
+                        <button class="btn-gacha tier-s" id="gacha-100k"  onclick="pullGacha(100000)" >🎲<br>10万円<br>ガチャ</button>
+                        <button class="btn-gacha tier-m" id="gacha-1m"    onclick="pullGacha(1000000)">🌀<br>100万円<br>ガチャ</button>
+                        <button class="btn-gacha tier-m" id="gacha-10m"   onclick="pullGacha(10000000)">🌀<br>1000万円<br>ガチャ</button>
+                        <button class="btn-gacha tier-l" id="gacha-100m"  onclick="pullGacha(100000000)">⚡<br>1億円<br>ガチャ</button>
+                        <button class="btn-gacha tier-l" id="gacha-1b"    onclick="pullGacha(1000000000)">⚡<br>10億円<br>ガチャ</button>
+                    </div>
+                </div>
+"""
+content = content.replace(
+    "                <button class=\"btn-loan\" id=\"btn-loan\" onclick=\"toggleLoan()\">",
+    gacha_html + "                <button class=\"btn-loan\" id=\"btn-loan\" onclick=\"toggleLoan()\">"
+)
 
-        #help-modal {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 300;
-        }
-        #help-modal.active { opacity: 1; pointer-events: auto; }
-        .modal-body {
-            background: #0d1226; border: 1px solid #334155; border-radius: 24px;
-            width: 650px; height: 650px; box-shadow: 0 0 60px rgba(0,0,0,0.9);
-            display: flex; flex-direction: column; overflow: hidden;
-            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
-        }
-        #help-modal.active .modal-body { transform: scale(1); }
-        .help-header { padding: 20px 25px; background: rgba(30, 41, 59, 0.4); border-bottom: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        .help-content { padding: 25px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: #cbd5e1; flex: 1; text-align: left; }
-        .help-section { margin-bottom: 20px; }
-        .help-section h4 { color: var(--warning); font-size: 14px; margin-bottom: 6px; font-weight: 800; border-left: 3px solid var(--warning); padding-left: 8px; }
-        .help-section ul { padding-left: 18px; margin-top: 5px; }
-        .help-section li { margin-bottom: 4px; }
-        .btn-close-modal {
-            background: #1e293b; border: none; color: #94a3b8; padding: 6px 14px; border-radius: 8px;
-            font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;
-        }
-        .btn-close-modal:hover { background: #ef4444; color: white; }
-
-        #game-container {
-            display: none; width: 100%; max-width: 1250px; height: 100%; max-height: 850px;
-            flex-direction: column; gap: 15px; position: relative;
-        }
-        header {
-            background: var(--bg-panel); border: 1px solid #1e293b; border-radius: 16px;
-            padding: 15px 40px; display: flex; justify-content: space-between; align-items: center;
-            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        .brand { font-size: 20px; font-weight: 900; letter-spacing: 3px; color: var(--warning); text-shadow: 0 0 15px rgba(255, 183, 0, 0.4); }
-        .stats-group { display: flex; align-items: center; gap: 30px; }
-        .stat-box { text-align: right; }
-        .stat-label { font-size: 11px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 2px; }
-        #display-cash { font-size: 34px; font-weight: 900; color: var(--success); text-shadow: 0 0 20px var(--success-glow); }
-        #display-timer { font-size: 34px; font-weight: 900; color: var(--danger); text-shadow: 0 0 20px var(--danger-glow); }
-        #display-pps { color: var(--warning); font-weight: 700; font-size: 18px; }
-        #debt-box { font-size: 34px; font-weight: 900; color: var(--danger); text-shadow: 0 0 20px var(--danger-glow); }
-        #news-bar {
-            background: rgba(30, 41, 59, 0.3); border: 1px solid #1e293b; color: #94a3b8;
-            padding: 12px; font-size: 13px; font-weight: 700; text-align: center; border-radius: 12px;
-            letter-spacing: 1px; transition: all 0.3s;
-        }
-        #news-bar.up { background: rgba(0, 255, 136, 0.1); color: #a7f3d0; border-color: var(--success); box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.1); }
-        #news-bar.down { background: rgba(255, 51, 102, 0.1); color: #fecdd3; border-color: var(--danger); box-shadow: inset 0 0 15px rgba(255, 51, 102, 0.1); }
-        #news-bar.fever { background: rgba(255, 183, 0, 0.15); color: var(--fever); border-color: var(--warning); animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
-
-        .main-deck { flex: 1; display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 15px; min-height: 0; }
-        .market-board { background: var(--bg-panel); border: 1px solid #1e293b; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-        .market-row { background: rgba(25, 32, 56, 0.4); border: 1px solid #1e293b; border-radius: 14px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
-        .market-row:hover { border-color: #334155; background: rgba(25, 32, 56, 0.6); }
-
-        /* ホールドボーナス発動中の光り方 */
-        .market-row.hold-bonus-active { border-color: var(--warning) !important; box-shadow: 0 0 12px rgba(255,183,0,0.25); }
-
-        .item-info { display: flex; align-items: center; gap: 15px; width: 35%; }
-        .item-icon { font-size: 28px; }
-        .item-name { font-size: 16px; font-weight: 800; }
-        .item-name.apple { color: var(--color-apple); }
-        .item-name.shoes { color: var(--color-shoes); }
-        .item-name.jewel { color: var(--color-jewel); }
-        .item-name.car { color: var(--color-car); }
-        .item-name.gold { color: var(--color-gold); }
-        .item-name.mansion { color: var(--color-mansion); }
-        .item-hold { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-
-        /* ホールドボーナス進捗バー */
-        .hold-bonus-bar-wrap { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 4px; overflow: hidden; width: 100%; }
-        .hold-bonus-bar { height: 100%; background: var(--warning); border-radius: 2px; transition: width 0.5s linear; width: 0%; }
-        .hold-bonus-label { font-size: 10px; color: var(--warning); font-weight: 800; margin-top: 2px; opacity: 0; transition: opacity 0.3s; }
-        .hold-bonus-label.visible { opacity: 1; }
-
-        .price-data { text-align: right; width: 30%; }
-        .item-price { font-size: 24px; font-weight: 900; transition: transform 0.1s; }
-        .item-percent { font-size: 12px; font-weight: 700; margin-top: 2px; display: inline-block; }
-        .action-group { display: flex; gap: 8px; width: 35%; justify-content: flex-end; }
-        .btn-trade {
-            border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 900;
-            cursor: pointer; color: white; transition: transform 0.05s, opacity 0.2s; min-width: 75px;
-        }
-        .btn-trade.buy { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2); }
-        .btn-trade.sell { background: linear-gradient(135deg, #dc2626, #f43f5e); box-shadow: 0 4px 14px rgba(244, 63, 94, 0.2); }
-
-        .sub-board { display: flex; flex-direction: column; gap: 15px; min-height: 0; }
-        .side-panel { background: var(--bg-panel); border: 1px solid #1e293b; border-radius: 16px; padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 10px; }
-        .side-panel::-webkit-scrollbar, .market-board::-webkit-scrollbar, .help-content::-webkit-scrollbar { width: 6px; }
-        .side-panel::-webkit-scrollbar-track, .market-board::-webkit-scrollbar-track, .help-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .side-panel::-webkit-scrollbar-thumb, .market-board::-webkit-scrollbar-thumb, .help-content::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .shop-row { background: rgba(25, 32, 56, 0.3); border: 1px solid #1e293b; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; transition: border-color 0.3s; }
-        .shop-row.synergy-active { border-color: var(--success); background: rgba(0, 255, 136, 0.03); }
-        .shop-title-area { display: flex; align-items: center; gap: 8px; }
-        .shop-count { font-size: 11px; font-weight: 800; background: rgba(0, 255, 136, 0.1); color: var(--success); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(0, 255, 136, 0.2); }
-        .shop-info h4 { font-size: 13px; font-weight: 700; color: #f1f5f9; }
-        .shop-info p { font-size: 11px; color: var(--text-muted); margin-top: 1px; transition: color 0.2s; }
-        .syn-tag { font-size: 9px; font-weight: 900; color: var(--success); background: rgba(0,255,136,0.15); padding: 1px 4px; border-radius: 3px; margin-left: 5px; display: none; }
-        .shop-row.synergy-active .syn-tag { display: inline-block; }
-        .shop-btn-group { display: flex; flex-direction: column; gap: 4px; min-width: 110px; }
-        .btn-shop { border: none; background: #312e81; color: #a5b4fc; padding: 6px 10px; border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; transition: all 0.2s; text-align: center; }
-        .btn-shop:hover:not(:disabled) { background: #4338ca; color: white; }
-        .btn-shop:disabled { background: #1e293b; color: #64748b; cursor: not-allowed; }
-        .btn-upgrade { border: 1px solid #4338ca; background: rgba(67, 56, 202, 0.1); color: #c084fc; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 10px; cursor: pointer; transition: all 0.2s; text-align: center; }
-        .btn-upgrade:hover:not(:disabled) { background: #6b21a8; color: white; border-color: #a855f7; }
-        .btn-upgrade:disabled { background: transparent; border-color: #1e293b; color: #475569; cursor: not-allowed; }
-        .btn-loan { border: 1px dashed var(--danger); background: rgba(251, 113, 133, 0.05); color: var(--danger); width: 100%; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.3s; flex-shrink: 0; margin-top: 5px; }
-
-        #result-screen {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(5, 7, 15, 0.98); backdrop-filter: blur(12px);
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s; z-index: 100;
-        }
-        #result-screen.active { opacity: 1; pointer-events: auto; }
-        .result-box { text-align: center; padding: 50px; width: 550px; border: 1px solid #334155; border-radius: 24px; background: #0d1121; box-shadow: 0 0 60px rgba(0,0,0,0.8); }
-        .final-money { font-size: 54px; font-weight: 900; color: var(--success); text-shadow: 0 0 25px var(--success-glow); margin: 25px 0; }
-        .rank-title { font-size: 20px; font-weight: 800; margin-bottom: 30px; letter-spacing: 1px; color: #cbd5e1; }
-        .btn-restart { background: linear-gradient(135deg, #3b82f6, #a855f7); color: white; border: none; padding: 14px 0; font-size: 16px; font-weight: 800; border-radius: 12px; width: 100%; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-<div id="fever-overlay"><div class="fever-text">OVERDRIVE</div></div>
-
-<div id="start-screen">
-    <div class="menu-box">
-        <div class="menu-logo">CHRONO INVESTOR</div>
-        <div class="menu-sub">SELECT TIME CORRIDOR MODE</div>
-        <div class="mode-list">
-            <button class="btn-mode" onclick="startGame(1)">⚡ ショートトレード <span class="time-badge">01:00</span></button>
-            <button class="btn-mode" onclick="startGame(2)">🏃 クイックラン <span class="time-badge">02:00</span></button>
-            <button class="btn-mode" onclick="startGame(3)">🛰️ スタンダード（推奨） <span class="time-badge">03:00</span></button>
-            <button class="btn-mode" onclick="startGame(5)">🏢 ロングストラテジー <span class="time-badge">05:00</span></button>
-            <button class="btn-mode" onclick="startGame(10)">⏳ ギャラクシーエンドレス <span class="time-badge">10:00</span></button>
-        </div>
-        <button class="btn-trigger-help" onclick="toggleHelpModal(true)">🛸 HOW TO PLAY (操作説明・シナジー一覧)</button>
-    </div>
+# ── 3. ガチャ結果オーバーレイHTML（result-screenの前に挿入）──
+gacha_overlay_html = """
+<div id="gacha-overlay">
+    <div class="gacha-result-tier" id="gacha-tier-label">SMALL</div>
+    <div class="gacha-result-badge" id="gacha-badge">🎲</div>
+    <div class="gacha-result-name" id="gacha-result-name">-</div>
+    <div class="gacha-result-desc" id="gacha-result-desc">-</div>
+    <button class="btn-gacha-close" onclick="closeGachaOverlay()">▶ 効果を受け取る</button>
 </div>
 
-<div id="help-modal" onclick="toggleHelpModal(false)">
-    <div class="modal-body" onclick="event.stopPropagation()">
-        <div class="help-header">
-            <h3 style="font-weight: 900; letter-spacing: 2px; color: white;">🛸 HOW TO PLAY</h3>
-            <button class="btn-close-modal" onclick="toggleHelpModal(false)">閉じる ×</button>
-        </div>
-        <div class="help-content">
-            <div class="help-section">
-                <h4>1. 基本ルール</h4>
-                <p>制限時間内にあらゆる手段を使って資産を増やす投資シミュレーションです。終了時、所持金と保有商品の価値を合わせた「最終純資産」があなたのスコアになります。</p>
-            </div>
-            <div class="help-section">
-                <h4>2. リアルタイム・トレード（左画面）</h4>
-                <p>商品の価格は常に変動します。上部のニュースバーに流れる市場動向を予測し、<b>「全買」で資金全額を突っ込み、「全売」で売り抜ける</b>ダイナミックな取引が基本です。</p>
-                <ul>
-                    <li><b style="color:var(--success);">▲ 上昇（緑色）:</b> 需要が高まっています。売り時のサインです。</li>
-                    <li><b style="color:var(--danger);">▼ 下落（赤色）:</b> 暴落中です。底値で仕込むチャンスかもしれません。</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h4>3. 商品の"性格"について</h4>
-                <p>各商品は独自の値動きアルゴリズムを持っています。</p>
-                <ul>
-                    <li><b style="color:var(--color-apple);">🍎 りんご（安定型）:</b> 変動が小さく読みやすい。初心者向け。</li>
-                    <li><b style="color:var(--color-shoes);">👟 スニーカー（中リスク型）:</b> 標準的な値動き。バランスが良い。</li>
-                    <li><b style="color:var(--color-jewel);">💎 宝石（超乱高下型）:</b> 大きく跳ねる・大きく沈む。ハイリスクハイリターン。</li>
-                    <li><b style="color:var(--color-car);">🏎️ 外車（急騰型）:</b> 上昇トレンドに乗ると一気に上がる。崩れると急落も。</li>
-                    <li><b style="color:var(--color-gold);">👑 ゴールド（暴落耐性型）:</b> 下落幅が小さい。じわじわ上がる安全資産。</li>
-                    <li><b style="color:var(--color-mansion);">🏢 マンション（保持ボーナス型）:</b> 10秒保持すると価値が2倍に跳ね上がる！</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h4>4. 保持ボーナス（マンション限定）</h4>
-                <p>🏢 高級マンションを購入後、<b>10秒間売らずに保持</b>すると価値が2倍になります。マンション行の下部にある黄色いバーが満タンになったら売り時！バーが見えている間は売らずに待とう。</p>
-            </div>
-            <div class="help-section">
-                <h4>5. 不労所得ショップと隠されたシナジー（右画面）</h4>
-                <p>施設を「購入」すると、毎秒自動的に現金が生成されます（AUTO INCOME）。さらに「強化」ボタンでレベルを上げると生産効率が3倍ずつ跳ね上がります。</p>
-                <p style="margin-top: 5px; font-weight: 700; color: #00ff88;">【施設シナジーの組み合わせ一覧】</p>
-                <ul>
-                    <li><b>自動販売機 🥤:</b> コンビニ(🏪)を1店舗でも持つと、自販機の売上が <b>5倍</b> に爆増。</li>
-                    <li><b>ゲームセンター 🕹️:</b> 自販機(🥤)を3台以上並べると、補給環境が整い売上が <b>2倍</b> に。</li>
-                    <li><b>宇宙開発 🚀:</b> メガテック企業(🌐)を3社保有すると、IT支援を受け売上が <b>2倍</b> に。</li>
-                    <li><b>タイムマシン ⏳:</b> 宇宙開発(🚀)を2つ進めると、量子加速が走り売上が <b>1.5倍</b> に。</li>
-                </ul>
-            </div>
-            <div class="help-section">
-                <h4>6. 闇金の緊急融資システム</h4>
-                <p>手元資金がなくても「緊急融資」で一瞬で3,000円を調達できますが、<b>秒利10%＋毎秒50円</b>という超暴利で借金が膨れ上がります。ゲーム終了時に未返済だとスコアから強制徴収されるため、稼いだらすぐに同じボタンで完済しましょう。</p>
-            </div>
-            <div class="help-section">
-                <h4>7. 全宇宙バブル（OVERDRIVE）</h4>
-                <p>ごく稀に画面が赤く染まる「OVERDRIVE」が発生します。全商品の価格が数秒間、強制的に超暴騰する大チャンスタイムです！</p>
-            </div>
-        </div>
-    </div>
-</div>
+"""
+content = content.replace('<div id="result-screen">', gacha_overlay_html + '<div id="result-screen">')
 
-<div id="game-container">
-    <header>
-        <div class="brand" id="game-brand">CHRONO INVESTOR</div>
-        <div class="stats-group">
-            <div class="stat-box">
-                <div class="stat-label">AUTO INCOME</div>
-                <div id="display-pps">0円/秒</div>
-            </div>
-            <div class="stat-box" id="debt-box" style="display: none;">
-                <div class="stat-label" style="color: var(--danger); font-weight: 900;">⚠️ TOTAL DEBT</div>
-                <div id="display-debt">0</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">TOTAL CASH</div>
-                <div id="display-cash" class="bump-target">1,000</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">TIME LIMIT</div>
-                <div id="display-timer">00:00</div>
-            </div>
-        </div>
-    </header>
-
-    <div id="news-bar">SYSTEM ONLINE : 時間軸を選択してください。</div>
-
-    <div class="main-deck">
-        <div class="market-board">
-            <div class="section-title" style="font-size: 11px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 5px;">REAL-TIME MARKET BOARD</div>
-
-            <div class="market-row" id="row-market-apple">
-                <div class="item-info">
-                    <div class="item-icon">🍎</div>
-                    <div>
-                        <div class="item-name apple">りんご</div>
-                        <div class="item-hold">保有: <span id="hold-apple" style="color:white; font-weight:700;">0</span></div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-apple">100</div><span class="item-percent" id="trend-apple">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('apple', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('apple', 'sell')">全売</button>
-                </div>
-            </div>
-
-            <div class="market-row" id="row-market-shoes">
-                <div class="item-info">
-                    <div class="item-icon">👟</div>
-                    <div>
-                        <div class="item-name shoes">スニーカー</div>
-                        <div class="item-hold">保有: <span id="hold-shoes" style="color:white; font-weight:700;">0</span></div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-shoes">300</div><span class="item-percent" id="trend-shoes">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('shoes', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('shoes', 'sell')">全売</button>
-                </div>
-            </div>
-
-            <div class="market-row" id="row-market-jewel">
-                <div class="item-info">
-                    <div class="item-icon">💎</div>
-                    <div>
-                        <div class="item-name jewel">まほうの宝石</div>
-                        <div class="item-hold">保有: <span id="hold-jewel" style="color:white; font-weight:700;">0</span></div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-jewel">1,000</div><span class="item-percent" id="trend-jewel">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('jewel', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('jewel', 'sell')">全売</button>
-                </div>
-            </div>
-
-            <div class="market-row" id="row-market-car">
-                <div class="item-info">
-                    <div class="item-icon">🏎️</div>
-                    <div>
-                        <div class="item-name car">高級外車</div>
-                        <div class="item-hold">保有: <span id="hold-car" style="color:white; font-weight:700;">0</span></div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-car">5,000</div><span class="item-percent" id="trend-car">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('car', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('car', 'sell')">全売</button>
-                </div>
-            </div>
-
-            <div class="market-row" id="row-market-gold">
-                <div class="item-info">
-                    <div class="item-icon">👑</div>
-                    <div>
-                        <div class="item-name gold">金（ゴールド）</div>
-                        <div class="item-hold">保有: <span id="hold-gold" style="color:white; font-weight:700;">0</span></div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-gold">30,000</div><span class="item-percent" id="trend-gold">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('gold', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('gold', 'sell')">全売</button>
-                </div>
-            </div>
-
-            <!-- マンション行：保持ボーナスUI付き -->
-            <div class="market-row" id="row-market-mansion">
-                <div class="item-info">
-                    <div class="item-icon">🏢</div>
-                    <div style="width:100%;">
-                        <div class="item-name mansion">高級マンション</div>
-                        <div class="item-hold">保有: <span id="hold-mansion" style="color:white; font-weight:700;">0</span></div>
-                        <div class="hold-bonus-bar-wrap"><div class="hold-bonus-bar" id="hold-bonus-bar"></div></div>
-                        <div class="hold-bonus-label" id="hold-bonus-label">⏳ 保持ボーナス待機中…</div>
-                    </div>
-                </div>
-                <div class="price-data"><div class="item-price" id="price-mansion">200,000</div><span class="item-percent" id="trend-mansion">±0.0%</span></div>
-                <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('mansion', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('mansion', 'sell')">全売</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="sub-board">
-            <div class="side-panel">
-                <div class="section-title" style="font-size: 11px; color: var(--text-muted); letter-spacing: 2px;">AUTOMATION SHOP</div>
-
-                <div class="shop-row" id="row-vending">
-                    <div class="shop-info"><div class="shop-title-area"><h4>自動販売機 🥤</h4><span class="shop-count" id="count-vending">×0</span><span class="syn-tag">連携×5</span></div><p id="eff-vending">+10円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-vending" onclick="buyShop('vending')">購入</button><button class="btn-upgrade" id="ug-vending" onclick="upgradeShop('vending')">強化</button></div>
-                </div>
-                <div class="shop-row" id="row-arcade">
-                    <div class="shop-info"><div class="shop-title-area"><h4>ゲームセンター 🕹️</h4><span class="shop-count" id="count-arcade">×0</span><span class="syn-tag">補給×2</span></div><p id="eff-arcade">+60円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-arcade" onclick="buyShop('arcade')">購入</button><button class="btn-upgrade" id="ug-arcade" onclick="upgradeShop('arcade')">強化</button></div>
-                </div>
-                <div class="shop-row" id="row-store">
-                    <div class="shop-info"><div class="shop-title-area"><h4>コンビニ 🏪</h4><span class="shop-count" id="count-store">×0</span></div><p id="eff-store">+400円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-store" onclick="buyShop('store')">購入</button><button class="btn-upgrade" id="ug-store" onclick="upgradeShop('store')">強化</button></div>
-                </div>
-                <div class="shop-row" id="row-tech">
-                    <div class="shop-info"><div class="shop-title-area"><h4>メガテック企業 🌐</h4><span class="shop-count" id="count-tech">×0</span></div><p id="eff-tech">+3,000円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-tech" onclick="buyShop('tech')">購入</button><button class="btn-upgrade" id="ug-tech" onclick="upgradeShop('tech')">強化</button></div>
-                </div>
-                <div class="shop-row" id="row-space">
-                    <div class="shop-info"><div class="shop-title-area"><h4>宇宙開発 🚀</h4><span class="shop-count" id="count-space">×0</span><span class="syn-tag">IT支援×2</span></div><p id="eff-space">+20,000円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-space" onclick="buyShop('space')">購入</button><button class="btn-upgrade" id="ug-space" onclick="upgradeShop('space')">強化</button></div>
-                </div>
-                <div class="shop-row" id="row-time">
-                    <div class="shop-info"><div class="shop-title-area"><h4>タイムマシン ⏳</h4><span class="shop-count" id="count-time">×0</span><span class="syn-tag">量子加速×1.5</span></div><p id="eff-time">+120,000円/秒</p></div>
-                    <div class="shop-btn-group"><button class="btn-shop" id="shop-time" onclick="buyShop('time')">購入</button><button class="btn-upgrade" id="ug-time" onclick="upgradeShop('time')">強化</button></div>
-                </div>
-
-                <button class="btn-loan" id="btn-loan" onclick="toggleLoan()">⚠️ 緊急融資を受ける（+3,000円 / 秒利10%+50円）</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="result-screen">
-    <div class="result-box">
-        <div style="font-size: 13px; color: var(--text-muted); letter-spacing: 3px;">FINAL REPORT</div>
-        <div class="final-money" id="final-money">¥0</div>
-        <div class="rank-title" id="rank-title">-</div>
-        <button class="btn-restart" onclick="returnToMenu()">▶ もう一度プレイする</button>
-    </div>
-</div>
-
-<script>
+# ── 4. ガチャJS（toggleHelpModalの前に挿入）──────────────────
+gacha_js = """
 // ============================================================
-//  AUDIO
+//  GACHA SYSTEM
 // ============================================================
-const bgm = new Audio("./bgm.mp3");
-bgm.loop = true;
-bgm.volume = 0.25;
-const soundNews = new Audio("./news.mp3");
-const soundSuccess = new Audio("./success.mp3");
-const soundCash = new Audio("./cash.mp3");
-const soundOverdrive = new Audio("./overdrive.mp3");
-soundNews.volume = 0.4;
-soundSuccess.volume = 0.4;
-soundCash.volume = 0.5;
-soundOverdrive.volume = 0.4;
-let isBgmStarted = false;
-document.addEventListener("click", () => {
-    if (!isBgmStarted) {
-        bgm.play().catch(e => console.log("BGM blocked:", e));
-        isBgmStarted = true;
-    }
-});
 
-// ============================================================
-//  STATE
-// ============================================================
-let cash = 1000;
-let timeLeft = 0;
-let gameRunning = false;
-let isFever = false;
-let debt = 0;
-let mainInterval = null;
-let priceInterval = null;
-let feverTimeout = null;
-let feverScheduleTimeout = null;
-
-// ============================================================
-//  商品定義 — ★ 各アイテムに "personality" を追加
-//
-//  personality フィールド:
-//    volatility   : 変動幅の倍率 (1.0 = 標準)
-//    upBias       : 上昇しやすさ (0.5=均等, 0.7=上昇寄り)
-//    crashGuard   : 下落幅のキャップ割合 (1.0=制限なし, 0.5=半分まで)
-//    surgePower   : 急騰時の上振れ倍率
-//    trendStrength: 前回の方向を引き継ぐ確率 (トレンド継続性)
-//    holdBonus    : { enabled, seconds, multiplier } 保持ボーナス設定
-// ============================================================
-const ITEMS = {
-    apple: {
-        basePrice: 100, price: 100, hold: 0, buyPrice: 0, range: 0.06,
-        // 安定型：変動小さく、急落しにくい
-        personality: { volatility: 0.4, upBias: 0.52, crashGuard: 0.4, surgePower: 1.2, trendStrength: 0.3 },
-        holdBonus: null
-    },
-    shoes: {
-        basePrice: 300, price: 300, hold: 0, buyPrice: 0, range: 0.14,
-        // 中リスク型：標準的な値動き
-        personality: { volatility: 1.0, upBias: 0.5, crashGuard: 1.0, surgePower: 1.5, trendStrength: 0.4 },
-        holdBonus: null
-    },
-    jewel: {
-        basePrice: 1000, price: 1000, hold: 0, buyPrice: 0, range: 0.35,
-        // 超乱高下型：大きく跳ね、大きく沈む
-        personality: { volatility: 3.0, upBias: 0.48, crashGuard: 1.0, surgePower: 3.0, trendStrength: 0.2 },
-        holdBonus: null
-    },
-    car: {
-        basePrice: 5000, price: 5000, hold: 0, buyPrice: 0, range: 0.28,
-        // 急騰型：上昇トレンドに乗ると連続上昇、崩れると急落
-        personality: { volatility: 1.5, upBias: 0.55, crashGuard: 1.0, surgePower: 2.5, trendStrength: 0.65 },
-        holdBonus: null
-    },
-    gold: {
-        basePrice: 30000, price: 30000, hold: 0, buyPrice: 0, range: 0.12,
-        // 暴落耐性型：下落幅小、じわじわ上がる安全資産
-        personality: { volatility: 0.7, upBias: 0.58, crashGuard: 0.3, surgePower: 1.3, trendStrength: 0.5 },
-        holdBonus: null
-    },
-    mansion: {
-        basePrice: 200000, price: 200000, hold: 0, buyPrice: 0, range: 0.40,
-        // 保持ボーナス型：値動き穏やか、10秒保持で価値2倍
-        personality: { volatility: 0.5, upBias: 0.52, crashGuard: 0.5, surgePower: 1.2, trendStrength: 0.4 },
-        holdBonus: { seconds: 10, multiplier: 2.0 }
-    }
+// ガチャ効果の状態管理
+const gachaState = {
+    volatilityBoost: 0,       // 残りティック数（ボラ+30%）
+    upBiasBoost: 0,           // 残りティック数（上昇強化）
+    reverseTrendItem: null,   // 逆トレンド対象アイテム
+    reverseTrendTicks: 0,
+    feverProbBoost: false,    // fever確率2倍（次回1回）
+    debtFrozen: false,        // 借金金利停止
+    debtFrozenTicks: 0,
+    causalInversion: 0,       // 因果逆転ティック数
+    priceFrozen: 0,           // 価格凍結ティック数
+    synergyInverted: 0,       // シナジー反転ティック数
 };
 
-// トレンド状態（アイテムごとに前回方向を記憶）
-const trends = { apple: 0, shoes: 0, jewel: 0, car: 0, gold: 0, mansion: 0 };
+// 全6段階 × 複数テーブル定義
+const GACHA_TABLES = {
+    10000: [
+        { w:40, emoji:'📈', name:'ボラティリティ急騰', desc:'全商品の変動幅が30%増加（10秒間）', tier:'SMALL', apply: () => { gachaState.volatilityBoost = 10; } },
+        { w:35, emoji:'🔼', name:'上昇トレンド強化', desc:'全商品のupBiasが少し上昇（15秒間）', tier:'SMALL', apply: () => { gachaState.upBiasBoost = 15; } },
+        { w:25, emoji:'🔀', name:'1銘柄・逆トレンド化', desc:'ランダムな1銘柄がトレンド逆転（8秒間）', tier:'SMALL', apply: () => {
+            const keys = Object.keys(ITEMS);
+            gachaState.reverseTrendItem = keys[Math.floor(Math.random() * keys.length)];
+            gachaState.reverseTrendTicks = 8;
+        }},
+    ],
+    100000: [
+        { w:40, emoji:'📈', name:'ボラティリティ超急騰', desc:'全商品の変動幅が60%増加（20秒間）', tier:'SMALL+', apply: () => { gachaState.volatilityBoost = 20; } },
+        { w:35, emoji:'🔼', name:'強力・上昇トレンド', desc:'全商品のupBiasが大きく上昇（25秒間）', tier:'SMALL+', apply: () => { gachaState.upBiasBoost = 25; } },
+        { w:25, emoji:'🔀', name:'3銘柄・逆トレンド化', desc:'ランダムな3銘柄が逆トレンド（12秒間）', tier:'SMALL+', apply: () => {
+            const keys = [...Object.keys(ITEMS)].sort(()=>Math.random()-0.5).slice(0,3);
+            gachaState.reverseTrendItem = keys;
+            gachaState.reverseTrendTicks = 12;
+        }},
+    ],
+    1000000: [
+        { w:30, emoji:'♻️', name:'全トレンドリセット', desc:'全アイテムのトレンドをリセット。相場が仕切り直しに。', tier:'MEDIUM', apply: () => { Object.keys(trends).forEach(k => trends[k] = 0); } },
+        { w:30, emoji:'💥', name:'全市場同時ショック', desc:'全アイテムに強制的な大幅価格変動が発生！', tier:'MEDIUM', apply: () => {
+            Object.keys(ITEMS).forEach(k => {
+                const item = ITEMS[k];
+                const shock = (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.3);
+                item.price = Math.max(item.basePrice * 0.2, Math.min(item.basePrice * 30, item.price * (1 + shock)));
+            });
+        }},
+        { w:20, emoji:'🎯', name:'FEVER確率2倍', desc:'次回のOVERDRIVE発生確率が2倍になる。', tier:'MEDIUM', apply: () => { gachaState.feverProbBoost = true; } },
+        { w:20, emoji:'🛡️', name:'借金金利停止', desc:'借金の利息が20秒間停止する。', tier:'MEDIUM', apply: () => { gachaState.debtFrozen = true; gachaState.debtFrozenTicks = 20; } },
+    ],
+    10000000: [
+        { w:30, emoji:'♻️', name:'全トレンド強制リセット', desc:'全アイテムのトレンドをリセット＋上昇バイアス付与（30秒）', tier:'MEDIUM+', apply: () => { Object.keys(trends).forEach(k => trends[k] = 0); gachaState.upBiasBoost = 30; } },
+        { w:30, emoji:'💥', name:'全市場超ショック', desc:'全アイテムに超大規模な価格変動！相場が激変する。', tier:'MEDIUM+', apply: () => {
+            Object.keys(ITEMS).forEach(k => {
+                const item = ITEMS[k];
+                const shock = (Math.random() > 0.4 ? 1 : -1) * (0.4 + Math.random() * 0.5);
+                item.price = Math.max(item.basePrice * 0.2, Math.min(item.basePrice * 30, item.price * (1 + shock)));
+            });
+        }},
+        { w:20, emoji:'🎯', name:'FEVER即時発動', desc:'今すぐOVERDRIVEが発動する！', tier:'MEDIUM+', apply: () => {
+            clearTimeout(feverTimeout); clearTimeout(feverScheduleTimeout);
+            triggerFever();
+        }},
+        { w:20, emoji:'🛡️', name:'借金完全凍結', desc:'借金の利息が40秒間完全に停止する。', tier:'MEDIUM+', apply: () => { gachaState.debtFrozen = true; gachaState.debtFrozenTicks = 40; } },
+    ],
+    100000000: [
+        { w:35, emoji:'🔁', name:'市場の因果逆転', desc:'上昇しやすい商品ほど暴落する。15秒間、upBiasが反転。', tier:'LARGE', apply: () => { gachaState.causalInversion = 15; } },
+        { w:35, emoji:'⏸️', name:'価格凍結（時間停止）', desc:'全商品の価格更新が10秒間完全に停止する。', tier:'LARGE', apply: () => { gachaState.priceFrozen = 10; } },
+        { w:30, emoji:'🏢', name:'マンションボーナス即時発動', desc:'高級マンションの保持ボーナスが即座に2倍発動！', tier:'LARGE', apply: () => {
+            if (ITEMS.mansion.hold > 0) {
+                holdBonusState.mansion.holdStartTime = Date.now() - ITEMS.mansion.holdBonus.seconds * 1000;
+            }
+        }},
+    ],
+    1000000000: [
+        { w:33, emoji:'🌌', name:'宇宙規模の因果逆転', desc:'全商品のupBiasが完全反転。暴騰が暴落に、暴落が暴騰に。30秒間。', tier:'LEGEND', apply: () => { gachaState.causalInversion = 30; } },
+        { w:33, emoji:'⏳', name:'時空凍結・最大規模', desc:'全商品の価格更新が25秒間停止。この間に全売りで逃げろ！', tier:'LEGEND', apply: () => { gachaState.priceFrozen = 25; } },
+        { w:34, emoji:'🔮', name:'全シナジー反転', desc:'シナジーがすべて逆効果に。×5が÷5、×2が÷2になる。20秒間。', tier:'LEGEND', apply: () => { gachaState.synergyInverted = 20; } },
+    ],
+};
 
-// 保持ボーナス管理
-const holdBonusState = {
-    mansion: {
-        holdStartTime: null,   // 保持開始時刻
-        bonusApplied: false,   // ボーナス適用済みフラグ
-        multipliedPrice: null  // ボーナス後の価格
+const TIER_COLORS = {
+    'SMALL':   '#3b82f6',
+    'SMALL+':  '#8b5cf6',
+    'MEDIUM':  '#a855f7',
+    'MEDIUM+': '#ec4899',
+    'LARGE':   '#f43f5e',
+    'LEGEND':  '#ffe066',
+};
+
+function pullGacha(cost) {
+    if (!gameRunning || cash < cost) return;
+    cash -= cost;
+    updateDisplay();
+
+    // テーブルから重み付き抽選
+    const table = GACHA_TABLES[cost];
+    const totalW = table.reduce((s, r) => s + r.w, 0);
+    let rand = Math.random() * totalW;
+    let result = table[table.length - 1];
+    for (const r of table) { rand -= r.w; if (rand <= 0) { result = r; break; } }
+
+    // 演出表示
+    const overlay = document.getElementById('gacha-overlay');
+    document.getElementById('gacha-tier-label').textContent = result.tier;
+    document.getElementById('gacha-tier-label').style.color = TIER_COLORS[result.tier] || 'white';
+    document.getElementById('gacha-badge').textContent = result.emoji;
+    document.getElementById('gacha-result-name').textContent = result.name;
+    document.getElementById('gacha-result-name').style.color = TIER_COLORS[result.tier] || 'white';
+    document.getElementById('gacha-result-desc').textContent = result.desc;
+    overlay.classList.add('active');
+
+    // ボタンを閉じたときに効果を適用するため一時保存
+    overlay._pendingApply = result.apply;
+
+    updateGachaButtons();
+}
+
+function closeGachaOverlay() {
+    const overlay = document.getElementById('gacha-overlay');
+    overlay.classList.remove('active');
+    if (overlay._pendingApply) {
+        overlay._pendingApply();
+        overlay._pendingApply = null;
     }
-};
-
-// ============================================================
-//  SHOP定義
-// ============================================================
-const SHOPS = {
-    vending: { cost: 200,    basePps: 10,     level: 1, count: 0, upgradeCost: 500 },
-    arcade:  { cost: 800,    basePps: 60,     level: 1, count: 0, upgradeCost: 2000 },
-    store:   { cost: 5000,   basePps: 400,    level: 1, count: 0, upgradeCost: 12000 },
-    tech:    { cost: 30000,  basePps: 3000,   level: 1, count: 0, upgradeCost: 80000 },
-    space:   { cost: 150000, basePps: 20000,  level: 1, count: 0, upgradeCost: 400000 },
-    time:    { cost: 800000, basePps: 120000, level: 1, count: 0, upgradeCost: 2000000 }
-};
-
-// ============================================================
-//  UTIL
-// ============================================================
-function fmt(n) {
-    return Math.floor(n).toLocaleString('ja-JP');
 }
 
-function spawnParticle(x, y, text) {
-    const el = document.createElement('div');
-    el.className = 'click-particle';
-    el.textContent = text;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-    const mx = (Math.random() - 0.5) * 80;
-    const my = -40 - Math.random() * 40;
-    el.style.setProperty('--mx', mx + 'px');
-    el.style.setProperty('--my', my + 'px');
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 500);
+function updateGachaButtons() {
+    const costs = [10000, 100000, 1000000, 10000000, 100000000, 1000000000];
+    const ids = ['gacha-10k','gacha-100k','gacha-1m','gacha-10m','gacha-100m','gacha-1b'];
+    costs.forEach((c, i) => {
+        const btn = document.getElementById(ids[i]);
+        if (btn) btn.disabled = !gameRunning || cash < c;
+    });
 }
 
-function bumpCash() {
-    const el = document.getElementById('display-cash');
-    el.classList.remove('bump-active');
-    void el.offsetWidth;
-    el.classList.add('bump-active');
-    setTimeout(() => el.classList.remove('bump-active'), 150);
-}
+"""
 
-// ============================================================
-//  PRICE ENGINE — ★ personality を使った差別化アルゴリズム
-// ============================================================
-function tickPrices() {
+content = content.replace(
+    '// ============================================================\n//  HELP MODAL',
+    gacha_js + '// ============================================================\n//  HELP MODAL'
+)
+
+# ── 5. tickPricesにgachaState適用フックを追加 ──────────────────
+# volatilityBoost, upBiasBoost, causalInversion, priceFrozenをticPricesに組み込む
+old_tick = """function tickPrices() {
     Object.keys(ITEMS).forEach(key => {
         const item = ITEMS[key];
         const p = item.personality;
@@ -617,459 +235,96 @@ function tickPrices() {
             direction = trends[key]; // 前回方向を継続
         } else {
             direction = Math.random() < (p.upBias + feverBoost * 0.2) ? 1 : -1;
-        }
+        }"""
 
-        // 基本変動幅（商品ごとのvolatilityで倍率が変わる）
-        let changePct = (Math.random() - 0.46) * 2 * item.range * p.volatility;
-
-        // 急騰イベント（低確率で跳ね上がり）
-        if (Math.random() < 0.05) {
-            changePct *= p.surgePower;
-            direction = 1; // 急騰は必ず上方向
-        }
-
-        // フィーバー中は追加ブースト
-        if (isFever) changePct = Math.abs(changePct) + 0.20;
-
-        // 下落方向のとき crashGuard でキャップ
-        if (direction === -1) {
-            changePct = Math.min(changePct, 0.08 * p.crashGuard);
-        }
-
-        const prev = item.price;
-        let next = prev * (1 + direction * changePct);
-
-        // 価格の下限（baseの20%）・上限（baseの3000%）
-        next = Math.max(base * 0.2, Math.min(base * 30, next));
-
-        // 保持ボーナス適用中はボーナス後の価格を維持
-        if (holdBonusState[key] && holdBonusState[key].bonusApplied) {
-            next = holdBonusState[key].multipliedPrice;
-        }
-
-        const pct = ((next - prev) / prev * 100).toFixed(1);
-        item.price = next;
-        trends[key] = direction;
-
-        // DOM更新
-        const priceEl = document.getElementById('price-' + key);
-        const trendEl = document.getElementById('trend-' + key);
-        if (priceEl) priceEl.textContent = fmt(next);
-        if (trendEl) {
-            trendEl.textContent = (direction > 0 ? '▲' : '▼') + Math.abs(pct) + '%';
-            trendEl.style.color = direction > 0 ? 'var(--success)' : 'var(--danger)';
-        }
-    });
-
-    updateShopButtons();
-}
-
-// ============================================================
-//  保持ボーナス — mansion専用
-// ============================================================
-function updateHoldBonus() {
-    const item = ITEMS.mansion;
-    const state = holdBonusState.mansion;
-    const bar = document.getElementById('hold-bonus-bar');
-    const label = document.getElementById('hold-bonus-label');
-    const row = document.getElementById('row-market-mansion');
-
-    if (item.hold <= 0 || !state.holdStartTime) {
-        // 保有なし → バーリセット
-        bar.style.width = '0%';
-        label.classList.remove('visible');
-        row.classList.remove('hold-bonus-active');
-        state.bonusApplied = false;
-        state.multipliedPrice = null;
-        return;
-    }
-
-    if (state.bonusApplied) {
-        bar.style.width = '100%';
-        label.textContent = '✨ ボーナス発動中！ 今すぐ売れ！';
-        label.classList.add('visible');
-        row.classList.add('hold-bonus-active');
-        return;
-    }
-
-    const elapsed = (Date.now() - state.holdStartTime) / 1000;
-    const required = item.holdBonus.seconds;
-    const progress = Math.min(elapsed / required, 1.0);
-    bar.style.width = (progress * 100) + '%';
-
-    if (progress < 1.0) {
-        const remaining = Math.ceil(required - elapsed);
-        label.textContent = '⏳ ' + remaining + '秒後にボーナス発動（×' + item.holdBonus.multiplier + '）';
-        label.classList.add('visible');
-        row.classList.remove('hold-bonus-active');
-    } else {
-        // ボーナス発動！
-        state.bonusApplied = true;
-        state.multipliedPrice = item.price * item.holdBonus.multiplier;
-        item.price = state.multipliedPrice;
-        document.getElementById('price-mansion').textContent = fmt(item.price);
-        label.textContent = '✨ ボーナス発動中！ 今すぐ売れ！';
-        label.classList.add('visible');
-        row.classList.add('hold-bonus-active');
-
-        // ニュースバーに通知
-        flashNews('🏢 マンション保持ボーナス発動！ 価値が2倍になった！ 今すぐ売れ！', 'up');
-        spawnParticle(window.innerWidth / 2, window.innerHeight / 2, '×2 BONUS!');
-    }
-}
-
-// ============================================================
-//  TRADE
-// ============================================================
-function trade(key, action) {
-    if (!gameRunning) return;
-    const item = ITEMS[key];
-
-    if (action === 'buy') {
-        if (cash < item.price) return;
-        const qty = Math.floor(cash / item.price);
-        if (qty <= 0) return;
-        const cost = qty * item.price;
-        cash -= cost;
-
-        // 既に保有していたら保持時間は引き継がない（新規購入時刻でリセット）
-        if (item.hold === 0) {
-            item.buyPrice = item.price;
-            // 保持ボーナスリセット
-            if (holdBonusState[key]) {
-                holdBonusState[key].holdStartTime = Date.now();
-                holdBonusState[key].bonusApplied = false;
-                holdBonusState[key].multipliedPrice = null;
-            }
-        }
-        item.hold += qty;
-        document.getElementById('hold-' + key).textContent = item.hold;
-        spawnParticle(event.clientX, event.clientY, '-¥' + fmt(cost));
-        updateDisplay();
-
-    } else if (action === 'sell') {
-        if (item.hold <= 0) return;
-        const proceeds = item.hold * item.price;
-        cash += proceeds;
-        item.hold = 0;
-        item.buyPrice = 0;
-
-        // 保持ボーナスリセット
-        if (holdBonusState[key]) {
-            holdBonusState[key].holdStartTime = null;
-            holdBonusState[key].bonusApplied = false;
-            holdBonusState[key].multipliedPrice = null;
-        }
-
-        document.getElementById('hold-' + key).textContent = 0;
-        spawnParticle(event.clientX, event.clientY, '+¥' + fmt(proceeds));
-        updateDisplay();
-        bumpCash();
-    }
-}
-
-// ============================================================
-//  SHOP
-// ============================================================
-function calcPps() {
-    let total = 0;
-    const s = SHOPS;
-    Object.keys(s).forEach(key => {
-        if (s[key].count === 0) return;
-        let pps = s[key].basePps * s[key].count * Math.pow(3, s[key].level - 1);
-
-        // シナジー
-        if (key === 'vending' && s.store.count >= 1)  pps *= 5;
-        if (key === 'arcade'  && s.vending.count >= 3) pps *= 2;
-        if (key === 'space'   && s.tech.count >= 3)    pps *= 2;
-        if (key === 'time'    && s.space.count >= 2)   pps *= 1.5;
-
-        total += pps;
-    });
-    return total;
-}
-
-function updateShopButtons() {
-    Object.keys(SHOPS).forEach(key => {
-        const s = SHOPS[key];
-        const btn = document.getElementById('shop-' + key);
-        const ugBtn = document.getElementById('ug-' + key);
-        if (!btn) return;
-        const cost = Math.floor(s.cost * Math.pow(1.5, s.count));
-        btn.textContent = '購入 ¥' + fmt(cost);
-        btn.disabled = cash < cost;
-
-        const ugCost = Math.floor(s.upgradeCost * Math.pow(2, s.level - 1));
-        ugBtn.textContent = 'Lv' + s.level + '→' + (s.level + 1) + ' ¥' + fmt(ugCost);
-        ugBtn.disabled = cash < ugCost || s.count === 0;
-
-        // シナジー表示
-        const row = document.getElementById('row-' + key);
-        if (!row) return;
-        let synergyActive = false;
-        if (key === 'vending' && SHOPS.store.count >= 1)   synergyActive = true;
-        if (key === 'arcade'  && SHOPS.vending.count >= 3) synergyActive = true;
-        if (key === 'space'   && SHOPS.tech.count >= 3)    synergyActive = true;
-        if (key === 'time'    && SHOPS.space.count >= 2)   synergyActive = true;
-        row.classList.toggle('synergy-active', synergyActive);
-    });
-
-    const pps = calcPps();
-    document.getElementById('display-pps').textContent = fmt(pps) + '円/秒';
-}
-
-function buyShop(key) {
-    if (!gameRunning) return;
-    const s = SHOPS[key];
-    const cost = Math.floor(s.cost * Math.pow(1.5, s.count));
-    if (cash < cost) return;
-    cash -= cost;
-    soundCash.currentTime = 0; soundCash.play();
-    s.count++;
-    document.getElementById('count-' + key).textContent = '×' + s.count;
-    updateDisplay();
-    updateShopButtons();
-}
-
-function upgradeShop(key) {
-    if (!gameRunning) return;
-    const s = SHOPS[key];
-    if (s.count === 0) return;
-    const cost = Math.floor(s.upgradeCost * Math.pow(2, s.level - 1));
-    if (cash < cost) return;
-    cash -= cost;
-    s.level++;
-    const pps = s.basePps * s.count * Math.pow(3, s.level - 1);
-    document.getElementById('eff-' + key).textContent = '+' + fmt(pps) + '円/秒';
-    updateDisplay();
-    updateShopButtons();
-}
-
-// ============================================================
-//  LOAN
-// ============================================================
-function toggleLoan() {
-    if (!gameRunning) return;
-    if (debt <= 0) {
-        // 借入
-        debt = 3000;
-        cash += 3000;
-        document.getElementById('debt-box').style.display = '';
-        document.getElementById('btn-loan').textContent = '💰 借金を返済する';
-        updateDisplay();
-    } else {
-        // 返済
-        if (cash < debt) return;
-        cash -= debt;
-        debt = 0;
-        document.getElementById('debt-box').style.display = 'none';
-        document.getElementById('btn-loan').textContent = '⚠️ 緊急融資を受ける（+3,000円 / 秒利10%+50円）';
-        updateDisplay();
-    }
-}
-
-// ============================================================
-//  DISPLAY
-// ============================================================
-function updateDisplay() {
-    document.getElementById('display-cash').textContent = fmt(cash);
-    if (debt > 0) {
-        document.getElementById('display-debt').textContent = '¥' + fmt(debt);
-    }
-}
-
-// ============================================================
-//  NEWS
-// ============================================================
-const NEWS_UP = [
-    '📈 市場に強気シグナル — 全面高の展開へ',
-    '🚀 機関投資家が大規模買い越し',
-    '💹 好景気指標：消費拡大が加速',
-    '🌟 テクノロジー株が急騰、市場を牽引',
-    '🏆 過去最高益を更新する企業が続出',
-];
-const NEWS_DOWN = [
-    '📉 世界同時株安 — パニック売り広がる',
-    '💥 大手ファンドが大規模ポジション解消',
-    '⚠️ 景気後退懸念が再燃、投資家心理悪化',
-    '🔻 外国為替の急変動が市場を直撃',
-    '🌪️ 予想外の政策発表で市場が混乱',
-];
-
-function flashNews(msg, type) {
-    const bar = document.getElementById('news-bar');
-    bar.textContent = msg;
-    bar.className = '';
-    bar.classList.add(type);
-}
-
-function randomNews() {
-    const isUp = Math.random() < 0.55;
-    const arr = isUp ? NEWS_UP : NEWS_DOWN;
-    flashNews(arr[Math.floor(Math.random() * arr.length)], isUp ? 'up' : 'down');
-}
-
-// ============================================================
-//  FEVER
-// ============================================================
-function triggerFever() {
-    isFever = true;
-    document.getElementById('fever-overlay').classList.add('active');
-        soundOverdrive.currentTime = 0; soundOverdrive.play();
-    flashNews('🔥🔥🔥 OVERDRIVE発動！ 全商品が超暴騰中！！ 🔥🔥🔥', 'fever');
-
-    feverTimeout = setTimeout(() => {
-        isFever = false;
-        document.getElementById('fever-overlay').classList.remove('active');
-        randomNews();
-        scheduleFever();
-    }, 5000 + Math.random() * 3000);
-}
-
-function scheduleFever() {
-    const delay = 20000 + Math.random() * 30000;
-    feverScheduleTimeout = setTimeout(triggerFever, delay);
-}
-
-// ============================================================
-//  TIMER
-// ============================================================
-function formatTime(sec) {
-    const m = String(Math.floor(sec / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    return m + ':' + s;
-}
-
-// ============================================================
-//  GAME START / END
-// ============================================================
-function startGame(minutes) {
-    // リセット
-    cash = 1000;
-    debt = 0;
-    isFever = false;
-    timeLeft = minutes * 60;
+new_tick = """function tickPrices() {
+    // 価格凍結中は何もしない
+    if (gachaState.priceFrozen > 0) { gachaState.priceFrozen--; return; }
 
     Object.keys(ITEMS).forEach(key => {
-        ITEMS[key].price = ITEMS[key].basePrice;
-        ITEMS[key].hold = 0;
-        ITEMS[key].buyPrice = 0;
-        document.getElementById('hold-' + key).textContent = '0';
-        document.getElementById('price-' + key).textContent = fmt(ITEMS[key].basePrice);
-        document.getElementById('trend-' + key).textContent = '±0.0%';
-        document.getElementById('trend-' + key).style.color = '';
-        trends[key] = 0;
-    });
+        const item = ITEMS[key];
+        const p = item.personality;
+        const base = item.basePrice;
 
-    // 保持ボーナスリセット
-    holdBonusState.mansion = { holdStartTime: null, bonusApplied: false, multipliedPrice: null };
-    document.getElementById('hold-bonus-bar').style.width = '0%';
-    document.getElementById('hold-bonus-label').classList.remove('visible');
-    document.getElementById('row-market-mansion').classList.remove('hold-bonus-active');
+        // フィーバー時は全商品に上昇バイアス
+        const feverBoost = isFever ? 1.5 : 0;
 
-    Object.keys(SHOPS).forEach(key => {
-        SHOPS[key].count = 0;
-        SHOPS[key].level = 1;
-        document.getElementById('count-' + key).textContent = '×0';
-        document.getElementById('row-' + key).classList.remove('synergy-active');
-    });
+        // ガチャ: 因果逆転中はupBiasを反転
+        const effectiveUpBias = gachaState.causalInversion > 0 ? (1 - p.upBias) : p.upBias;
+        // ガチャ: upBiasBoost中は上昇寄りに
+        const finalUpBias = effectiveUpBias + (gachaState.upBiasBoost > 0 ? 0.15 : 0);
 
-    document.getElementById('debt-box').style.display = 'none';
-    document.getElementById('btn-loan').textContent = '⚠️ 緊急融資を受ける（+3,000円 / 秒利10%+50円）';
-    document.getElementById('fever-overlay').classList.remove('active');
-    document.getElementById('result-screen').classList.remove('active');
+        // トレンド継続判定
+        let direction;
+        // ガチャ: 逆トレンド対象アイテムは方向を反転
+        const isReversed = Array.isArray(gachaState.reverseTrendItem)
+            ? gachaState.reverseTrendItem.includes(key)
+            : gachaState.reverseTrendItem === key;
 
-    updateDisplay();
-    updateShopButtons();
+        if (Math.random() < p.trendStrength && trends[key] !== 0) {
+            direction = (isReversed && gachaState.reverseTrendTicks > 0) ? -trends[key] : trends[key];
+        } else {
+            direction = Math.random() < (finalUpBias + feverBoost * 0.2) ? 1 : -1;
+            if (isReversed && gachaState.reverseTrendTicks > 0) direction *= -1;
+        }"""
 
-    document.getElementById('start-screen').classList.add('hide');
-    const gc = document.getElementById('game-container');
-    gc.style.display = 'flex';
+content = content.replace(old_tick, new_tick)
 
-    gameRunning = true;
-    document.getElementById('display-timer').textContent = formatTime(timeLeft);
-    randomNews();
+# changePctにvolatilityBoostを適用
+old_changepct = "        let changePct = (Math.random() - 0.46) * 2 * item.range * p.volatility;"
+new_changepct = """        // ガチャ: ボラティリティブーストを適用
+        const volMult = 1 + (gachaState.volatilityBoost > 0 ? 0.3 : 0);
+        let changePct = (Math.random() - 0.46) * 2 * item.range * p.volatility * volMult;"""
+content = content.replace(old_changepct, new_changepct)
 
-    // 価格更新（500ms毎）
-    priceInterval = setInterval(() => {
-        tickPrices();
-        updateHoldBonus();
-    }, 1000);
+# tickPricesの最後（updateShopButtons呼び出しの前）にカウントダウン処理を追加
+old_end_tick = """    updateShopButtons();
+}"""
+new_end_tick = """    updateShopButtons();
+    updateGachaButtons();
 
-    // メインループ（1秒毎）
-    mainInterval = setInterval(() => {
-        // 自動収益
-        const pps = calcPps();
-        if (pps > 0) {
-            cash += pps;
-            bumpCash();
-        }
+    // ガチャstate カウントダウン
+    if (gachaState.volatilityBoost > 0)   gachaState.volatilityBoost--;
+    if (gachaState.upBiasBoost > 0)        gachaState.upBiasBoost--;
+    if (gachaState.reverseTrendTicks > 0)  { gachaState.reverseTrendTicks--; if (gachaState.reverseTrendTicks <= 0) gachaState.reverseTrendItem = null; }
+    if (gachaState.causalInversion > 0)    gachaState.causalInversion--;
+    if (gachaState.synergyInverted > 0)    gachaState.synergyInverted--;
+}"""
+# tickPricesの閉じ括弧は他の関数でも使われるので、明示的な文字列で対応
+content = content.replace(
+    "    updateShopButtons();\n}\n\nfunction buyShop(",
+    new_end_tick + "\n\nfunction buyShop("
+)
 
-        // 借金利息
+# ── 6. 借金凍結をmainIntervalに適用 ──────────────────────────
+old_debt = """        // 借金利息
         if (debt > 0) {
             debt = Math.floor(debt * 1.1 + 50);
             document.getElementById('display-debt').textContent = '¥' + fmt(debt);
+        }"""
+new_debt = """        // 借金利息（ガチャ凍結中はスキップ）
+        if (debt > 0 && !gachaState.debtFrozen) {
+            debt = Math.floor(debt * 1.1 + 50);
+            document.getElementById('display-debt').textContent = '¥' + fmt(debt);
         }
+        if (gachaState.debtFrozen) {
+            gachaState.debtFrozenTicks--;
+            if (gachaState.debtFrozenTicks <= 0) gachaState.debtFrozen = false;
+        }"""
+content = content.replace(old_debt, new_debt)
 
-        updateDisplay();
-
-        // ニュース更新（10秒毎）
-        if (timeLeft % 10 === 0 && !isFever) { randomNews(); soundNews.currentTime = 0; soundNews.play(); }
-
-        timeLeft--;
-        document.getElementById('display-timer').textContent = formatTime(timeLeft);
-
-        if (timeLeft <= 0) endGame();
-    }, 1000);
-
-    scheduleFever();
-}
-
-function endGame() {
-    gameRunning = false;
-    soundSuccess.currentTime = 0; soundSuccess.play();
-    clearInterval(mainInterval);
-    clearInterval(priceInterval);
-    clearTimeout(feverTimeout);
-    clearTimeout(feverScheduleTimeout);
-    document.getElementById('fever-overlay').classList.remove('active');
-
-    // 保有商品を時価換算
-    let assetValue = 0;
-    Object.keys(ITEMS).forEach(key => {
-        assetValue += ITEMS[key].hold * ITEMS[key].price;
+# ── 7. startGameでgachaStateをリセット ───────────────────────
+old_reset = "    gameRunning = true;"
+new_reset = """    // ガチャstateリセット
+    Object.keys(gachaState).forEach(k => {
+        if (typeof gachaState[k] === 'number') gachaState[k] = 0;
+        else if (typeof gachaState[k] === 'boolean') gachaState[k] = false;
+        else gachaState[k] = null;
     });
+    gameRunning = true;"""
+content = content.replace(old_reset, new_reset, 1)
 
-    let finalNet = Math.floor(cash + assetValue - debt);
-
-    // ランク判定
-    let rank = '';
-    if      (finalNet >= 10000000) rank = '🌌 GALAXY EMPEROR — 宇宙の覇者';
-    else if (finalNet >= 1000000)  rank = '👑 CHRONO KING — 時を超えた王';
-    else if (finalNet >= 500000)   rank = '💎 DIAMOND TRADER — 伝説の投資家';
-    else if (finalNet >= 100000)   rank = '🏆 GOLD INVESTOR — 黄金の投資家';
-    else if (finalNet >= 50000)    rank = '🥈 SILVER TRADER — 優秀なトレーダー';
-    else if (finalNet >= 10000)    rank = '🥉 BRONZE DEALER — 経験を積んだ商人';
-    else if (finalNet >= 1000)     rank = '📈 MARKET ROOKIE — 市場見習い';
-    else                            rank = '💸 BANKRUPT — 無一文…';
-
-    document.getElementById('final-money').textContent = '¥' + fmt(finalNet);
-    document.getElementById('rank-title').textContent = rank;
-    document.getElementById('result-screen').classList.add('active');
-}
-
-function returnToMenu() {
-    document.getElementById('result-screen').classList.remove('active');
-    document.getElementById('game-container').style.display = 'none';
-    document.getElementById('start-screen').classList.remove('hide');
-}
-
-// ============================================================
-//  HELP MODAL
-// ============================================================
-function toggleHelpModal(show) {
-    document.getElementById('help-modal').classList.toggle('active', show);
-}
-</script>
-</body>
-</html>
+with open('/mnt/user-data/outputs/index.html', 'w') as f:
+    f.write(content)
+print("done")
+PYEOF
