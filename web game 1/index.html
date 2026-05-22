@@ -1,255 +1,205 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="icon" href="favicon.jpg" type="image/jpeg">
-<title>CHRONO INVESTOR : OVERDRIVE</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.jpg" type="image/jpeg">
+    <title>CHRONO INVESTOR : OVERDRIVE</title>
 
 <style>
-/* ====== 既存CSSそのまま ====== */
-/* （省略なしで元コード維持） */
-/* ↓↓↓ここはあなたのCSSをそのまま貼ってください↓↓↓ */
+/* ★ ここはあなたの元CSSをそのまま貼り付けてください（変更なし） */
 </style>
+
 </head>
 
 <body>
 
-<!-- ====== HTMLもそのまま ====== -->
-<!-- ↓↓↓ここもあなたの元HTMLをそのまま使用↓↓↓ -->
+<div id="fever-overlay">
+    <div class="fever-text">OVERDRIVE</div>
+</div>
 
+<div id="start-screen">
+    <div class="menu-box">
+        <div class="menu-logo">CHRONO INVESTOR</div>
+        <div class="menu-sub">SELECT MODE</div>
+
+        <div class="mode-list">
+            <button class="btn-mode" onclick="startGame(1)">1 MIN</button>
+            <button class="btn-mode" onclick="startGame(3)">3 MIN</button>
+            <button class="btn-mode" onclick="startGame(5)">5 MIN</button>
+            <button class="btn-mode" onclick="startGame(10)">10 MIN</button>
+        </div>
+    </div>
+</div>
+
+<div id="game-container" style="display:none;">
+    <header>
+        <div class="brand" id="game-brand">CHRONO INVESTOR</div>
+        <div id="display-cash">1000</div>
+        <div id="display-timer">00:00</div>
+    </header>
+
+    <div id="news-bar">SYSTEM</div>
+
+    <!-- ===== マーケット ===== -->
+    <div class="market-board">
+
+        <div>🍎 りんご <span id="price-apple"></span> <span id="hold-apple"></span>
+            <button onclick="trade('apple','buy')">BUY</button>
+            <button onclick="trade('apple','sell')">SELL</button>
+        </div>
+
+        <div>👟 スニーカー <span id="price-shoes"></span> <span id="hold-shoes"></span>
+            <button onclick="trade('shoes','buy')">BUY</button>
+            <button onclick="trade('shoes','sell')">SELL</button>
+        </div>
+
+        <div>💎 宝石 <span id="price-jewel"></span> <span id="hold-jewel"></span>
+            <button onclick="trade('jewel','buy')">BUY</button>
+            <button onclick="trade('jewel','sell')">SELL</button>
+        </div>
+
+    </div>
+</div>
 
 <script>
-// ==========================================
-// 🔊 AUDIO
-// ==========================================
-const bgm = new Audio('./bgm.mp3');
-bgm.loop = true;
-bgm.volume = 0.25;
-
-const soundNews = new Audio('./news.mp3');
-const soundSuccess = new Audio('./success.mp3');
-const soundCash = new Audio('./cash.mp3');
-const soundOverdrive = new Audio('overdrive.mp3');
-
-soundNews.volume = 0.4;
-soundSuccess.volume = 0.4;
-soundCash.volume = 0.5;
-soundOverdrive.volume = 0.4;
-
-let isBgmStarted = false;
-document.addEventListener('click', () => {
-    if (!isBgmStarted) {
-        bgm.play().catch(()=>{});
-        isBgmStarted = true;
-    }
-});
-
-// ==========================================
-// 🎮 GAME STATE（改良版）
-// ==========================================
+// ==========================
+// GAME STATE
+// ==========================
 let game = {
     cash: 1000,
     timeLeft: 180,
-    chosenMinutes: 3,
     autoPPS: 0,
     isOver: false,
-    loanDebt: 0,
-    feverTicks: 0,
-    activeEvent: { item: null, type: null, duration: 0 },
 
     items: {
-        apple:   { price:100, lastPrice:100, base:100, min:20, max:400, hold:0, holdTime:0, range:0.05 },
-        shoes:   { price:300, lastPrice:300, base:300, min:60, max:1200, hold:0, holdTime:0, range:0.12 },
-        jewel:   { price:1000, lastPrice:1000, base:1000, min:200, max:8000, hold:0, holdTime:0, range:0.38 },
-        car:     { price:5000, lastPrice:5000, base:5000, min:1200, max:30000, hold:0, holdTime:0, range:0.30 },
-        gold:    { price:30000, lastPrice:30000, base:30000, min:10000, max:90000, hold:0, holdTime:0, range:0.10 },
-        mansion: { price:200000,lastPrice:200000,base:200000,min:40000,max:900000,hold:0,holdTime:0,range:0.45 }
-    },
-
-    shops: {
-        vending:{count:0,cost:200,basePps:10,ugLv:1,ugCost:400},
-        arcade:{count:0,cost:1000,basePps:60,ugLv:1,ugCost:2500},
-        store:{count:0,cost:5000,basePps:400,ugLv:1,ugCost:15000},
-        tech:{count:0,cost:30000,basePps:3000,ugLv:1,ugCost:90000},
-        space:{count:0,cost:150000,basePps:20000,ugLv:1,ugCost:450000},
-        time:{count:0,cost:800000,basePps:120000,ugLv:1,ugCost:2400000}
+        apple: { price:100, lastPrice:100, min:20, max:400, hold:0, holdTime:0, range:0.06 },
+        shoes: { price:300, lastPrice:300, min:60, max:1200, hold:0, holdTime:0, range:0.14 },
+        jewel: { price:1000, lastPrice:1000, min:200, max:8000, hold:0, holdTime:0, range:0.35 }
     }
 };
 
-let gameClock = null;
-const newsEl = document.getElementById('news-bar');
+let timer = null;
 
-// ==========================================
-// 🧠 保持ボーナスロジック（追加機能）
-// ==========================================
-function updateHoldBonus() {
-    for (let k in game.items) {
-        const it = game.items[k];
-        if (it.hold > 0) {
-            it.holdTime++;
-        } else {
-            it.holdTime = 0;
-        }
-    }
-}
-
-// 10秒以上保持で倍率
-function getHoldMultiplier(item) {
-    if (item.holdTime >= 20) return 2.0;
-    if (item.holdTime >= 10) return 1.5;
-    if (item.holdTime >= 5) return 1.2;
+// ==========================
+// 保持ボーナス
+// ==========================
+function getHoldBonus(item){
+    if(item.holdTime >= 10) return 2.0;
+    if(item.holdTime >= 5) return 1.5;
     return 1.0;
 }
 
-// ==========================================
-// UI
-// ==========================================
-function toggleHelpModal(show){
-    const m=document.getElementById('help-modal');
-    m.classList.toggle('active',show);
-}
-
-// ==========================================
+// ==========================
 // START
-// ==========================================
-function startGame(minutes){
-    game.chosenMinutes = minutes;
-    game.timeLeft = minutes*60;
+// ==========================
+function startGame(min){
+    game.timeLeft = min * 60;
+    document.getElementById("start-screen").style.display="none";
+    document.getElementById("game-container").style.display="block";
 
-    document.getElementById('start-screen').classList.add('hide');
-    document.getElementById('game-container').style.display='flex';
-
+    timer = setInterval(tick,1000);
     updateUI();
-    gameClock = setInterval(tickGame,1000);
 }
 
-// ==========================================
-// TRADE（保持ボーナス追加）
-// ==========================================
+// ==========================
+// TRADE
+// ==========================
 function trade(key,type){
-    const it = game.items[key];
+    let item = game.items[key];
 
-    if(type==='buy' && game.cash>=it.price){
-        let c=Math.floor(game.cash/it.price);
-        game.cash -= c*it.price;
-        it.hold += c;
-        it.holdTime = 0; // reset
+    if(type === "buy"){
+        if(game.cash >= item.price){
+            let c = Math.floor(game.cash / item.price);
+            game.cash -= c * item.price;
+            item.hold += c;
+            item.holdTime = 0;
+        }
     }
 
-    if(type==='sell' && it.hold>0){
-        let bonus = getHoldMultiplier(it);
-        game.cash += it.hold * it.price * bonus;
-        it.hold = 0;
-        it.holdTime = 0;
+    if(type === "sell"){
+        if(item.hold > 0){
+            let bonus = getHoldBonus(item);
+            game.cash += item.hold * item.price * bonus;
+            item.hold = 0;
+            item.holdTime = 0;
+        }
     }
 
     updateUI();
 }
 
-// ==========================================
-// ショップ（そのまま維持）
-// ==========================================
-function buyShop(type){
-    const s=game.shops[type];
-    if(game.cash<s.cost) return;
-    game.cash-=s.cost;
-    s.count++;
-    s.cost=Math.floor(s.cost*1.15);
-    recalcPPS();
-    updateUI();
-}
-
-function upgradeShop(type){
-    const s=game.shops[type];
-    if(game.cash<s.ugCost) return;
-    game.cash-=s.ugCost;
-    s.ugLv++;
-    s.ugCost=Math.floor(s.ugCost*2.8);
-    recalcPPS();
-    updateUI();
-}
-
-// ==========================================
-// PPS
-// ==========================================
-function recalcPPS(){
-    let t=0;
-    for(let k in game.shops){
-        const s=game.shops[k];
-        t += s.count * s.basePps * s.ugLv;
-    }
-    game.autoPPS=t;
-}
-
-// ==========================================
-// TICK（商品性格追加）
-// ==========================================
-function tickGame(){
+// ==========================
+// TICK
+// ==========================
+function tick(){
     game.cash += game.autoPPS;
     game.timeLeft--;
 
-    updateHoldBonus();
-
-    if(game.timeLeft<=0) return endGame();
-
+    // 保持時間加算
     for(let k in game.items){
-        const it=game.items[k];
+        let it = game.items[k];
+        if(it.hold > 0) it.holdTime++;
+        else it.holdTime = 0;
+    }
 
-        let drift = (Math.random()-0.5)*it.range;
+    // 終了
+    if(game.timeLeft <= 0){
+        clearInterval(timer);
+        return endGame();
+    }
 
-        // 商品性格（重要追加）
-        if(k==='apple') drift *= 0.7;        // 安定
-        if(k==='shoes') drift *= 1.0;        // 中
-        if(k==='jewel') drift *= 2.0;        // 高ボラ
-        if(k==='car') drift += 0.01;        // 上昇バイアス
-        if(k==='gold') drift *= 0.5;        // 防御
-        if(k==='mansion') drift *= 2.5;     // 超乱高下
+    // ==========================
+    // 商品性格つき価格変動
+    // ==========================
+    for(let k in game.items){
+        let it = game.items[k];
+
+        let d = (Math.random()-0.5) * it.range;
+
+        // 性格差
+        if(k==="apple") d *= 0.7;
+        if(k==="shoes") d *= 1.0;
+        if(k==="jewel") d *= 2.2;
 
         it.lastPrice = it.price;
-        it.price = Math.max(it.min, Math.min(it.max, Math.round(it.price*(1+drift))));
+        it.price = Math.max(it.min, Math.min(it.max,
+            Math.round(it.price * (1 + d))
+        ));
     }
 
     updateUI();
 }
 
-// ==========================================
-// UI UPDATE
-// ==========================================
+// ==========================
+// UI
+// ==========================
 function updateUI(){
-    document.getElementById('display-cash').innerText=
-        Math.floor(game.cash).toLocaleString()+"円";
-
-    document.getElementById('display-timer').innerText=
-        `${String(Math.floor(game.timeLeft/60)).padStart(2,'0')}:${String(game.timeLeft%60).padStart(2,'0')}`;
-
-    document.getElementById('display-pps').innerText=
-        game.autoPPS.toLocaleString()+"円/秒";
+    document.getElementById("display-cash").innerText = game.cash;
 
     for(let k in game.items){
-        const it=game.items[k];
-        document.getElementById(`price-${k}`).innerText=it.price;
-        document.getElementById(`hold-${k}`).innerText=it.hold;
+        let it = game.items[k];
+        document.getElementById("price-"+k).innerText = it.price;
+        document.getElementById("hold-"+k).innerText = it.hold;
     }
+
+    document.getElementById("display-timer").innerText =
+        Math.floor(game.timeLeft/60)+":"+String(game.timeLeft%60).padStart(2,"0");
 }
 
-// ==========================================
+// ==========================
 // END
-// ==========================================
+// ==========================
 function endGame(){
-    game.isOver=true;
-    clearInterval(gameClock);
+    game.isOver = true;
 
-    let net=game.cash;
+    let total = game.cash;
+
     for(let k in game.items){
-        net += game.items[k].hold * game.items[k].price;
+        total += game.items[k].hold * game.items[k].price;
     }
 
-    document.getElementById('final-money').innerText=
-        Math.floor(net).toLocaleString();
-
-    document.getElementById('result-screen').classList.add('active');
+    alert("終了: " + total);
 }
 </script>
 
