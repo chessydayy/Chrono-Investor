@@ -462,6 +462,28 @@
 
 <script>
 // ============================================================
+//  AUDIO
+// ============================================================
+const bgm = new Audio("./bgm.mp3");
+bgm.loop = true;
+bgm.volume = 0.25;
+const soundNews = new Audio("./news.mp3");
+const soundSuccess = new Audio("./success.mp3");
+const soundCash = new Audio("./cash.mp3");
+const soundOverdrive = new Audio("./overdrive.mp3");
+soundNews.volume = 0.4;
+soundSuccess.volume = 0.4;
+soundCash.volume = 0.5;
+soundOverdrive.volume = 0.4;
+let isBgmStarted = false;
+document.addEventListener("click", () => {
+    if (!isBgmStarted) {
+        bgm.play().catch(e => console.log("BGM blocked:", e));
+        isBgmStarted = true;
+    }
+});
+
+// ============================================================
 //  STATE
 // ============================================================
 let cash = 1000;
@@ -802,6 +824,7 @@ function buyShop(key) {
     const cost = Math.floor(s.cost * Math.pow(1.5, s.count));
     if (cash < cost) return;
     cash -= cost;
+    soundCash.currentTime = 0; soundCash.play();
     s.count++;
     document.getElementById('count-' + key).textContent = '×' + s.count;
     updateDisplay();
@@ -892,6 +915,7 @@ function randomNews() {
 function triggerFever() {
     isFever = true;
     document.getElementById('fever-overlay').classList.add('active');
+        soundOverdrive.currentTime = 0; soundOverdrive.play();
     flashNews('🔥🔥🔥 OVERDRIVE発動！ 全商品が超暴騰中！！ 🔥🔥🔥', 'fever');
 
     feverTimeout = setTimeout(() => {
@@ -990,7 +1014,7 @@ function startGame(minutes) {
         updateDisplay();
 
         // ニュース更新（10秒毎）
-        if (timeLeft % 10 === 0 && !isFever) randomNews();
+        if (timeLeft % 10 === 0 && !isFever) { randomNews(); soundNews.currentTime = 0; soundNews.play(); }
 
         timeLeft--;
         document.getElementById('display-timer').textContent = formatTime(timeLeft);
@@ -1003,6 +1027,7 @@ function startGame(minutes) {
 
 function endGame() {
     gameRunning = false;
+    soundSuccess.currentTime = 0; soundSuccess.play();
     clearInterval(mainInterval);
     clearInterval(priceInterval);
     clearTimeout(feverTimeout);
