@@ -18,6 +18,10 @@
             --color-car: #ec4899;
             --color-gold: #f59e0b;
             --color-mansion: #10b981;
+            --color-crypto: #f97316;
+            --color-oil: #84cc16;
+            --color-art: #e879f9;
+            --color-spacex: #38bdf8;
             --success: #00ff88;
             --success-glow: rgba(0, 255, 136, 0.3);
             --danger: #ff3366;
@@ -162,6 +166,10 @@
         .item-name.car { color: var(--color-car); }
         .item-name.gold { color: var(--color-gold); }
         .item-name.mansion { color: var(--color-mansion); }
+        .item-name.crypto  { color: var(--color-crypto); }
+        .item-name.oil     { color: var(--color-oil); }
+        .item-name.art     { color: var(--color-art); }
+        .item-name.spacex  { color: var(--color-spacex); }
         .item-hold { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
 
         /* ホールドボーナス進捗バー */
@@ -180,6 +188,7 @@
         }
         .btn-trade.buy { background: linear-gradient(135deg, #059669, #10b981); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2); }
         .btn-trade.sell { background: linear-gradient(135deg, #dc2626, #f43f5e); box-shadow: 0 4px 14px rgba(244, 63, 94, 0.2); }
+        .btn-trade:disabled { background: #1e293b; color: #475569; cursor: not-allowed; box-shadow: none; opacity: 0.45; }
 
         .sub-board { display: flex; flex-direction: column; gap: 15px; min-height: 0; }
         .side-panel { background: var(--bg-panel); border: 1px solid #1e293b; border-radius: 16px; padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-right: 10px; }
@@ -366,8 +375,8 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-apple">100</div><span class="item-percent" id="trend-apple">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('apple', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('apple', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('apple', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('apple', 'sell', event)">全売</button>
                 </div>
             </div>
 
@@ -381,8 +390,8 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-shoes">300</div><span class="item-percent" id="trend-shoes">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('shoes', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('shoes', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('shoes', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('shoes', 'sell', event)">全売</button>
                 </div>
             </div>
 
@@ -396,8 +405,8 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-jewel">1,000</div><span class="item-percent" id="trend-jewel">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('jewel', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('jewel', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('jewel', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('jewel', 'sell', event)">全売</button>
                 </div>
             </div>
 
@@ -411,8 +420,8 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-car">5,000</div><span class="item-percent" id="trend-car">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('car', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('car', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('car', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('car', 'sell', event)">全売</button>
                 </div>
             </div>
 
@@ -426,8 +435,8 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-gold">30,000</div><span class="item-percent" id="trend-gold">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('gold', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('gold', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('gold', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('gold', 'sell', event)">全売</button>
                 </div>
             </div>
 
@@ -444,8 +453,72 @@
                 </div>
                 <div class="price-data"><div class="item-price" id="price-mansion">200,000</div><span class="item-percent" id="trend-mansion">±0.0%</span></div>
                 <div class="action-group">
-                    <button class="btn-trade buy" onclick="trade('mansion', 'buy')">全買</button>
-                    <button class="btn-trade sell" onclick="trade('mansion', 'sell')">全売</button>
+                    <button class="btn-trade buy" onclick="trade('mansion', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('mansion', 'sell', event)">全売</button>
+                </div>
+            </div>
+
+            <!-- 仮想通貨 -->
+            <div class="market-row" id="row-market-crypto">
+                <div class="item-info">
+                    <div class="item-icon">₿</div>
+                    <div>
+                        <div class="item-name crypto">仮想通貨</div>
+                        <div class="item-hold">保有: <span id="hold-crypto" style="color:white; font-weight:700;">0</span></div>
+                    </div>
+                </div>
+                <div class="price-data"><div class="item-price" id="price-crypto">500,000</div><span class="item-percent" id="trend-crypto">±0.0%</span></div>
+                <div class="action-group">
+                    <button class="btn-trade buy" onclick="trade('crypto', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('crypto', 'sell', event)">全売</button>
+                </div>
+            </div>
+
+            <!-- 石油 -->
+            <div class="market-row" id="row-market-oil">
+                <div class="item-info">
+                    <div class="item-icon">🛢️</div>
+                    <div>
+                        <div class="item-name oil">原油先物</div>
+                        <div class="item-hold">保有: <span id="hold-oil" style="color:white; font-weight:700;">0</span></div>
+                    </div>
+                </div>
+                <div class="price-data"><div class="item-price" id="price-oil">8,000</div><span class="item-percent" id="trend-oil">±0.0%</span></div>
+                <div class="action-group">
+                    <button class="btn-trade buy" onclick="trade('oil', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('oil', 'sell', event)">全売</button>
+                </div>
+            </div>
+
+            <!-- アート -->
+            <div class="market-row" id="row-market-art">
+                <div class="item-info">
+                    <div class="item-icon">🎨</div>
+                    <div>
+                        <div class="item-name art">現代アート</div>
+                        <div class="item-hold">保有: <span id="hold-art" style="color:white; font-weight:700;">0</span></div>
+                    </div>
+                </div>
+                <div class="price-data"><div class="item-price" id="price-art">50,000</div><span class="item-percent" id="trend-art">±0.0%</span></div>
+                <div class="action-group">
+                    <button class="btn-trade buy" onclick="trade('art', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('art', 'sell', event)">全売</button>
+                </div>
+            </div>
+
+            <!-- 宇宙株 -->
+            <div class="market-row" id="row-market-spacex">
+                <div class="item-info">
+                    <div class="item-icon">🛸</div>
+                    <div>
+                        <div class="item-name spacex">宇宙ベンチャー株</div>
+                        <div class="item-hold">保有: <span id="hold-spacex" style="color:white; font-weight:700;">0</span></div>
+                    </div>
+                </div>
+                <div class="price-data"><div class="item-price" id="price-spacex">2,000,000</div><span class="item-percent" id="trend-spacex">±0.0%</span></div>
+                <div class="action-group">
+                    <button class="btn-trade buy" onclick="trade('spacex', 'buy', event)">全買</button>
+                    <button class="btn-trade sell" onclick="trade('spacex', 'sell', event)">全売</button>
                 </div>
             </div>
         </div>
@@ -477,6 +550,14 @@
                 <div class="shop-row" id="row-time">
                     <div class="shop-info"><div class="shop-title-area"><h4>タイムマシン ⏳</h4><span class="shop-count" id="count-time">×0</span><span class="syn-tag">量子加速×1.5</span></div><p id="eff-time">+120,000円/秒</p></div>
                     <div class="shop-btn-group"><button class="btn-shop" id="shop-time" onclick="buyShop('time')">購入</button><button class="btn-upgrade" id="ug-time" onclick="upgradeShop('time')">強化</button></div>
+                </div>
+                <div class="shop-row" id="row-casino">
+                    <div class="shop-info"><div class="shop-title-area"><h4>カジノ 🎰</h4><span class="shop-count" id="count-casino">×0</span><span class="syn-tag">胴元×3</span></div><p id="eff-casino">+600,000円/秒</p></div>
+                    <div class="shop-btn-group"><button class="btn-shop" id="shop-casino" onclick="buyShop('casino')">購入</button><button class="btn-upgrade" id="ug-casino" onclick="upgradeShop('casino')">強化</button></div>
+                </div>
+                <div class="shop-row" id="row-quantum">
+                    <div class="shop-info"><div class="shop-title-area"><h4>量子コンピュータ 🔬</h4><span class="shop-count" id="count-quantum">×0</span><span class="syn-tag">全力演算×4</span></div><p id="eff-quantum">+4,000,000円/秒</p></div>
+                    <div class="shop-btn-group"><button class="btn-shop" id="shop-quantum" onclick="buyShop('quantum')">購入</button><button class="btn-upgrade" id="ug-quantum" onclick="upgradeShop('quantum')">強化</button></div>
                 </div>
 
 
@@ -599,11 +680,35 @@ const ITEMS = {
         // 保持ボーナス型：値動き穏やか、10秒保持で価値2倍
         personality: { volatility: 0.5, upBias: 0.52, crashGuard: 0.5, surgePower: 1.2, trendStrength: 0.4 },
         holdBonus: { seconds: 10, multiplier: 2.0 }
+    },
+    crypto: {
+        basePrice: 500000, price: 500000, hold: 0, buyPrice: 0, range: 0.50,
+        // バブル型：超乱高下、急騰も急落も極端。一発逆転狙い
+        personality: { volatility: 4.0, upBias: 0.47, crashGuard: 1.0, surgePower: 4.0, trendStrength: 0.15 },
+        holdBonus: null
+    },
+    oil: {
+        basePrice: 8000, price: 8000, hold: 0, buyPrice: 0, range: 0.18,
+        // 地政学型：ランダムショックが多く、上下どちらにも大きく動く
+        personality: { volatility: 1.8, upBias: 0.5, crashGuard: 0.8, surgePower: 2.0, trendStrength: 0.55 },
+        holdBonus: null
+    },
+    art: {
+        basePrice: 50000, price: 50000, hold: 0, buyPrice: 0, range: 0.22,
+        // トレンド追随型：一方向に動き続けやすい。タイミングが命
+        personality: { volatility: 1.2, upBias: 0.53, crashGuard: 0.6, surgePower: 1.8, trendStrength: 0.75 },
+        holdBonus: null
+    },
+    spacex: {
+        basePrice: 2000000, price: 2000000, hold: 0, buyPrice: 0, range: 0.45,
+        // 大化け型：滅多に動かないが、動いた時は桁が変わる
+        personality: { volatility: 0.3, upBias: 0.56, crashGuard: 0.7, surgePower: 8.0, trendStrength: 0.6 },
+        holdBonus: null
     }
 };
 
 // トレンド状態（アイテムごとに前回方向を記憶）
-const trends = { apple: 0, shoes: 0, jewel: 0, car: 0, gold: 0, mansion: 0 };
+const trends = { apple: 0, shoes: 0, jewel: 0, car: 0, gold: 0, mansion: 0, crypto: 0, oil: 0, art: 0, spacex: 0 };
 
 // 保持ボーナス管理
 const holdBonusState = {
@@ -618,12 +723,14 @@ const holdBonusState = {
 //  SHOP定義
 // ============================================================
 const SHOPS = {
-    vending: { cost: 200,    basePps: 10,     level: 1, count: 0, upgradeCost: 500 },
-    arcade:  { cost: 800,    basePps: 60,     level: 1, count: 0, upgradeCost: 2000 },
-    store:   { cost: 5000,   basePps: 400,    level: 1, count: 0, upgradeCost: 12000 },
-    tech:    { cost: 30000,  basePps: 3000,   level: 1, count: 0, upgradeCost: 80000 },
-    space:   { cost: 150000, basePps: 20000,  level: 1, count: 0, upgradeCost: 400000 },
-    time:    { cost: 800000, basePps: 120000, level: 1, count: 0, upgradeCost: 2000000 }
+    vending: { cost: 200,      basePps: 10,      level: 1, count: 0, upgradeCost: 500 },
+    arcade:  { cost: 800,      basePps: 60,      level: 1, count: 0, upgradeCost: 2000 },
+    store:   { cost: 5000,     basePps: 400,     level: 1, count: 0, upgradeCost: 12000 },
+    tech:    { cost: 30000,    basePps: 3000,    level: 1, count: 0, upgradeCost: 80000 },
+    space:   { cost: 150000,   basePps: 20000,   level: 1, count: 0, upgradeCost: 400000 },
+    time:    { cost: 800000,   basePps: 120000,  level: 1, count: 0, upgradeCost: 2000000 },
+    casino:  { cost: 5000000,  basePps: 600000,  level: 1, count: 0, upgradeCost: 15000000 },
+    quantum: { cost: 30000000, basePps: 4000000, level: 1, count: 0, upgradeCost: 100000000 }
 };
 
 // ============================================================
@@ -697,16 +804,19 @@ function tickPrices() {
         // 急騰イベント（低確率で跳ね上がり）
         if (Math.random() < 0.05) {
             changePct *= p.surgePower;
-            direction = 1; // 急騰は必ず上方向
+            direction = 1;
         }
 
         // フィーバー中は追加ブースト
         if (isFever) changePct = Math.abs(changePct) + 0.20;
 
-        // 下落方向のとき crashGuard でキャップ
+        // 下落方向のとき crashGuard でキャップ（修正：Math.minで絶対値制限）
         if (direction === -1) {
-            changePct = Math.min(changePct, 0.08 * p.crashGuard);
+            changePct = Math.min(Math.abs(changePct), 0.08 * p.crashGuard);
         }
+
+        // 1tick最大30%制限（価格暴走防止）
+        changePct = Math.min(Math.abs(changePct), 0.30);
 
         const prev = item.price;
         let next = prev * (1 + direction * changePct);
@@ -714,8 +824,9 @@ function tickPrices() {
         // 価格の下限（baseの20%）・上限（baseの3000%）
         next = Math.max(base * 0.2, Math.min(base * 30, next));
 
-        // 保持ボーナス適用中はボーナス後の価格を維持
-        if (holdBonusState[key] && holdBonusState[key].bonusApplied) {
+        // 保持ボーナス適用中はボーナス後の価格を維持（期限内のみ）
+        if (holdBonusState[key] && holdBonusState[key].bonusApplied &&
+            holdBonusState[key].bonusExpireTime && Date.now() <= holdBonusState[key].bonusExpireTime) {
             next = holdBonusState[key].multipliedPrice;
         }
 
@@ -757,8 +868,20 @@ function updateHoldBonus() {
     }
 
     if (state.bonusApplied) {
+        // 期限切れチェック
+        if (state.bonusExpireTime && Date.now() > state.bonusExpireTime) {
+            state.bonusApplied = false;
+            state.multipliedPrice = null;
+            state.holdStartTime = null;
+            bar.style.width = '0%';
+            label.classList.remove('visible');
+            row.classList.remove('hold-bonus-active');
+            flashNews('🏢 マンションボーナス期限切れ！ タイミングを逃した…', 'down');
+            return;
+        }
+        const remaining = Math.ceil((state.bonusExpireTime - Date.now()) / 1000);
         bar.style.width = '100%';
-        label.textContent = '✨ ボーナス発動中！ 今すぐ売れ！';
+        label.textContent = '✨ ボーナス発動中！ あと' + remaining + '秒！';
         label.classList.add('visible');
         row.classList.add('hold-bonus-active');
         return;
@@ -777,6 +900,7 @@ function updateHoldBonus() {
     } else {
         // ボーナス発動！
         state.bonusApplied = true;
+        state.bonusExpireTime = Date.now() + 8000; // 8秒で消滅
         state.multipliedPrice = item.price * item.holdBonus.multiplier;
         item.price = state.multipliedPrice;
         document.getElementById('price-mansion').textContent = fmt(item.price);
@@ -793,7 +917,7 @@ function updateHoldBonus() {
 // ============================================================
 //  TRADE
 // ============================================================
-function trade(key, action) {
+function trade(key, action, ev) {
     if (!gameRunning) return;
     const item = ITEMS[key];
 
@@ -816,8 +940,9 @@ function trade(key, action) {
         }
         item.hold += qty;
         document.getElementById('hold-' + key).textContent = item.hold;
-        spawnParticle(event.clientX, event.clientY, '-¥' + fmt(cost));
+        spawnParticle(ev ? ev.clientX : window.innerWidth/2, ev ? ev.clientY : window.innerHeight/2, '-¥' + fmt(cost));
         updateDisplay();
+        updateGachaButtons();
 
     } else if (action === 'sell') {
         if (item.hold <= 0) return;
@@ -834,8 +959,9 @@ function trade(key, action) {
         }
 
         document.getElementById('hold-' + key).textContent = 0;
-        spawnParticle(event.clientX, event.clientY, '+¥' + fmt(proceeds));
+        spawnParticle(ev ? ev.clientX : window.innerWidth/2, ev ? ev.clientY : window.innerHeight/2, '+¥' + fmt(proceeds));
         updateDisplay();
+        updateGachaButtons();
         bumpCash();
     }
 }
@@ -850,11 +976,16 @@ function calcPps() {
         if (s[key].count === 0) return;
         let pps = s[key].basePps * s[key].count * Math.pow(3, s[key].level - 1);
 
-        // シナジー
-        if (key === 'vending' && s.store.count >= 1)  pps *= 5;
-        if (key === 'arcade'  && s.vending.count >= 3) pps *= 2;
-        if (key === 'space'   && s.tech.count >= 3)    pps *= 2;
-        if (key === 'time'    && s.space.count >= 2)   pps *= 1.5;
+        // シナジー（synergyInverted中は逆効果）
+        const inv = gachaState.synergyInverted > 0;
+        if (key === 'vending' && s.store.count >= 1)   pps *= inv ? 1/5   : 5;
+        if (key === 'arcade'  && s.vending.count >= 3) pps *= inv ? 1/2   : 2;
+        if (key === 'space'   && s.tech.count >= 3)    pps *= inv ? 1/2   : 2;
+        if (key === 'time'    && s.space.count >= 2)   pps *= inv ? 1/1.5 : 1.5;
+        // カジノ：タイムマシン1台以上で胴元ボーナス×3
+        if (key === 'casino'  && s.time.count >= 1)   pps *= inv ? 1/3 : 3;
+        // 量子コンピュータ：カジノ2台以上で全力演算×4
+        if (key === 'quantum' && s.casino.count >= 2) pps *= inv ? 1/4 : 4;
 
         total += pps;
     });
@@ -871,9 +1002,14 @@ function updateShopButtons() {
         btn.textContent = '購入 ¥' + fmt(cost);
         btn.disabled = cash < cost;
 
-        const ugCost = Math.floor(s.upgradeCost * Math.pow(2, s.level - 1));
-        ugBtn.textContent = 'Lv' + s.level + '→' + (s.level + 1) + ' ¥' + fmt(ugCost);
-        ugBtn.disabled = cash < ugCost || s.count === 0;
+        if (s.level >= 5) {
+            ugBtn.textContent = 'MAX LV5';
+            ugBtn.disabled = true;
+        } else {
+            const ugCost = Math.floor(s.upgradeCost * Math.pow(2, s.level - 1));
+            ugBtn.textContent = 'Lv' + s.level + '→' + (s.level + 1) + ' ¥' + fmt(ugCost);
+            ugBtn.disabled = cash < ugCost || s.count === 0;
+        }
 
         // シナジー表示
         const row = document.getElementById('row-' + key);
@@ -883,6 +1019,8 @@ function updateShopButtons() {
         if (key === 'arcade'  && SHOPS.vending.count >= 3) synergyActive = true;
         if (key === 'space'   && SHOPS.tech.count >= 3)    synergyActive = true;
         if (key === 'time'    && SHOPS.space.count >= 2)   synergyActive = true;
+        if (key === 'casino'  && SHOPS.time.count >= 1)   synergyActive = true;
+        if (key === 'quantum' && SHOPS.casino.count >= 2) synergyActive = true;
         row.classList.toggle('synergy-active', synergyActive);
     });
 
@@ -901,12 +1039,14 @@ function buyShop(key) {
     document.getElementById('count-' + key).textContent = '×' + s.count;
     updateDisplay();
     updateShopButtons();
+    updateGachaButtons();
 }
 
 function upgradeShop(key) {
     if (!gameRunning) return;
     const s = SHOPS[key];
     if (s.count === 0) return;
+    if (s.level >= 5) return; // 最大Lv5
     const cost = Math.floor(s.upgradeCost * Math.pow(2, s.level - 1));
     if (cash < cost) return;
     cash -= cost;
@@ -915,6 +1055,7 @@ function upgradeShop(key) {
     document.getElementById('eff-' + key).textContent = '+' + fmt(pps) + '円/秒';
     updateDisplay();
     updateShopButtons();
+    updateGachaButtons();
 }
 
 // ============================================================
@@ -948,6 +1089,7 @@ function updateDisplay() {
     if (debt > 0) {
         document.getElementById('display-debt').textContent = '¥' + fmt(debt);
     }
+    updateTradeButtons();
 }
 
 // ============================================================
@@ -985,6 +1127,7 @@ function randomNews() {
 //  FEVER
 // ============================================================
 function triggerFever() {
+    if (isFever) return;
     isFever = true;
     document.getElementById('fever-overlay').classList.add('active');
         soundOverdrive.currentTime = 0; soundOverdrive.play();
@@ -999,7 +1142,13 @@ function triggerFever() {
 }
 
 function scheduleFever() {
-    const delay = 20000 + Math.random() * 30000;
+    let delay;
+    if (gachaState.feverProbBoost) {
+        delay = 10000 + Math.random() * 15000;
+        gachaState.feverProbBoost = false;
+    } else {
+        delay = 20000 + Math.random() * 30000;
+    }
     feverScheduleTimeout = setTimeout(triggerFever, delay);
 }
 
@@ -1034,7 +1183,7 @@ function startGame(minutes) {
     });
 
     // 保持ボーナスリセット
-    holdBonusState.mansion = { holdStartTime: null, bonusApplied: false, multipliedPrice: null };
+    holdBonusState.mansion = { holdStartTime: null, bonusApplied: false, multipliedPrice: null, bonusExpireTime: null };
     document.getElementById('hold-bonus-bar').style.width = '0%';
     document.getElementById('hold-bonus-label').classList.remove('visible');
     document.getElementById('row-market-mansion').classList.remove('hold-bonus-active');
@@ -1067,6 +1216,7 @@ function startGame(minutes) {
     gameRunning = true;
     document.getElementById('display-timer').textContent = formatTime(timeLeft);
     randomNews();
+    updateTradeButtons();
 
     // 価格更新（500ms毎）
     priceInterval = setInterval(() => {
@@ -1076,6 +1226,8 @@ function startGame(minutes) {
 
     // メインループ（1秒毎）
     mainInterval = setInterval(() => {
+        tickGachaEffects();
+
         // 自動収益
         const pps = calcPps();
         if (pps > 0) {
@@ -1094,6 +1246,7 @@ function startGame(minutes) {
         }
 
         updateDisplay();
+        updateGachaButtons();
 
         // ニュース更新（10秒毎）
         if (timeLeft % 10 === 0 && !isFever) { randomNews(); soundNews.currentTime = 0; soundNews.play(); }
@@ -1167,64 +1320,79 @@ const gachaState = {
 
 // 全6段階 × 複数テーブル定義
 const GACHA_TABLES = {
+    // ─── 1万円ガチャ ───────────────────────────────
     10000: [
-        { w:40, emoji:'📈', name:'ボラティリティ急騰', desc:'全商品の変動幅が30%増加（10秒間）', tier:'SMALL', apply: () => { gachaState.volatilityBoost = 10; } },
-        { w:35, emoji:'🔼', name:'上昇トレンド強化', desc:'全商品のupBiasが少し上昇（15秒間）', tier:'SMALL', apply: () => { gachaState.upBiasBoost = 15; } },
-        { w:25, emoji:'🔀', name:'1銘柄・逆トレンド化', desc:'ランダムな1銘柄がトレンド逆転（8秒間）', tier:'SMALL', apply: () => {
-            const keys = Object.keys(ITEMS);
-            gachaState.reverseTrendItem = keys[Math.floor(Math.random() * keys.length)];
-            gachaState.reverseTrendTicks = 8;
-        }},
+        { w:50, emoji:'💴', name:'所持金 +3万円', desc:'3万円がそのまま手に入る。確実に儲かる安定択。', tier:'SMALL',
+          apply: () => { cash += 30000; updateDisplay(); } },
+        { w:30, emoji:'💰', name:'所持金 +10万円', desc:'10万円がドンと入金される！', tier:'SMALL',
+          apply: () => { cash += 100000; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −5万円', desc:'ハズレ。5万円が溶けた…', tier:'SMALL',
+          apply: () => { cash = Math.max(0, cash - 50000); updateDisplay(); } },
+        { w:5,  emoji:'🎰', name:'所持金 ×3', desc:'大当たり！所持金が3倍に！', tier:'SMALL',
+          apply: () => { cash *= 3; updateDisplay(); } },
     ],
+    // ─── 10万円ガチャ ──────────────────────────────
     100000: [
-        { w:40, emoji:'📈', name:'ボラティリティ超急騰', desc:'全商品の変動幅が60%増加（20秒間）', tier:'SMALL+', apply: () => { gachaState.volatilityBoost = 20; } },
-        { w:35, emoji:'🔼', name:'強力・上昇トレンド', desc:'全商品のupBiasが大きく上昇（25秒間）', tier:'SMALL+', apply: () => { gachaState.upBiasBoost = 25; } },
-        { w:25, emoji:'🔀', name:'3銘柄・逆トレンド化', desc:'ランダムな3銘柄が逆トレンド（12秒間）', tier:'SMALL+', apply: () => {
-            const keys = [...Object.keys(ITEMS)].sort(()=>Math.random()-0.5).slice(0,3);
-            gachaState.reverseTrendItem = keys;
-            gachaState.reverseTrendTicks = 12;
-        }},
+        { w:45, emoji:'💴', name:'所持金 +30万円', desc:'30万円が即入金。投資額の3倍回収。', tier:'SMALL+',
+          apply: () => { cash += 300000; updateDisplay(); } },
+        { w:30, emoji:'💰', name:'所持金 +100万円', desc:'100万円がドンと降ってくる！', tier:'SMALL+',
+          apply: () => { cash += 1000000; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −20万円', desc:'ハズレ。20万円没収。', tier:'SMALL+',
+          apply: () => { cash = Math.max(0, cash - 200000); updateDisplay(); } },
+        { w:10, emoji:'🎰', name:'所持金 ×5', desc:'特大当たり！所持金が5倍に！', tier:'SMALL+',
+          apply: () => { cash *= 5; updateDisplay(); } },
     ],
+    // ─── 100万円ガチャ ─────────────────────────────
     1000000: [
-        { w:30, emoji:'♻️', name:'全トレンドリセット', desc:'全アイテムのトレンドをリセット。相場が仕切り直しに。', tier:'MEDIUM', apply: () => { Object.keys(trends).forEach(k => trends[k] = 0); } },
-        { w:30, emoji:'💥', name:'全市場同時ショック', desc:'全アイテムに強制的な大幅価格変動が発生！', tier:'MEDIUM', apply: () => {
-            Object.keys(ITEMS).forEach(k => {
-                const item = ITEMS[k];
-                const shock = (Math.random() > 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.3);
-                item.price = Math.max(item.basePrice * 0.2, Math.min(item.basePrice * 30, item.price * (1 + shock)));
-            });
-        }},
-        { w:20, emoji:'🎯', name:'FEVER確率2倍', desc:'次回のOVERDRIVE発生確率が2倍になる。', tier:'MEDIUM', apply: () => { gachaState.feverProbBoost = true; } },
-        { w:20, emoji:'🛡️', name:'借金金利停止', desc:'借金の利息が20秒間停止する。', tier:'MEDIUM', apply: () => { gachaState.debtFrozen = true; gachaState.debtFrozenTicks = 20; } },
+        { w:40, emoji:'💴', name:'所持金 +500万円', desc:'500万円が即入金。元手の5倍。', tier:'MEDIUM',
+          apply: () => { cash += 5000000; updateDisplay(); } },
+        { w:30, emoji:'💰', name:'所持金 +2000万円', desc:'2000万円が一気に入ってくる！', tier:'MEDIUM',
+          apply: () => { cash += 20000000; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −300万円', desc:'ハズレ。300万円消えた。', tier:'MEDIUM',
+          apply: () => { cash = Math.max(0, cash - 3000000); updateDisplay(); } },
+        { w:10, emoji:'🎰', name:'所持金 ×10', desc:'大爆発！所持金が10倍に！', tier:'MEDIUM',
+          apply: () => { cash *= 10; updateDisplay(); } },
+        { w:5,  emoji:'💀', name:'所持金 ÷2', desc:'大ハズレ。所持金が半分に…', tier:'MEDIUM',
+          apply: () => { cash = Math.floor(cash / 2); updateDisplay(); } },
     ],
+    // ─── 1000万円ガチャ ────────────────────────────
     10000000: [
-        { w:30, emoji:'♻️', name:'全トレンド強制リセット', desc:'全アイテムのトレンドをリセット＋上昇バイアス付与（30秒）', tier:'MEDIUM+', apply: () => { Object.keys(trends).forEach(k => trends[k] = 0); gachaState.upBiasBoost = 30; } },
-        { w:30, emoji:'💥', name:'全市場超ショック', desc:'全アイテムに超大規模な価格変動！相場が激変する。', tier:'MEDIUM+', apply: () => {
-            Object.keys(ITEMS).forEach(k => {
-                const item = ITEMS[k];
-                const shock = (Math.random() > 0.4 ? 1 : -1) * (0.4 + Math.random() * 0.5);
-                item.price = Math.max(item.basePrice * 0.2, Math.min(item.basePrice * 30, item.price * (1 + shock)));
-            });
-        }},
-        { w:20, emoji:'🎯', name:'FEVER即時発動', desc:'今すぐOVERDRIVEが発動する！', tier:'MEDIUM+', apply: () => {
-            clearTimeout(feverTimeout); clearTimeout(feverScheduleTimeout);
-            triggerFever();
-        }},
-        { w:20, emoji:'🛡️', name:'借金完全凍結', desc:'借金の利息が40秒間完全に停止する。', tier:'MEDIUM+', apply: () => { gachaState.debtFrozen = true; gachaState.debtFrozenTicks = 40; } },
+        { w:40, emoji:'💴', name:'所持金 +5000万円', desc:'5000万円が即入金。', tier:'MEDIUM+',
+          apply: () => { cash += 50000000; updateDisplay(); } },
+        { w:25, emoji:'💰', name:'所持金 +2億円', desc:'2億円が一気に降ってくる！', tier:'MEDIUM+',
+          apply: () => { cash += 200000000; updateDisplay(); } },
+        { w:15, emoji:'🎰', name:'所持金 ×20', desc:'超大当たり！所持金が20倍に！', tier:'MEDIUM+',
+          apply: () => { cash *= 20; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −2000万円', desc:'ハズレ。2000万円没収。', tier:'MEDIUM+',
+          apply: () => { cash = Math.max(0, cash - 20000000); updateDisplay(); } },
+        { w:5,  emoji:'💀', name:'所持金 ÷5', desc:'大ハズレ。所持金が5分の1に…', tier:'MEDIUM+',
+          apply: () => { cash = Math.floor(cash / 5); updateDisplay(); } },
     ],
+    // ─── 1億円ガチャ ───────────────────────────────
     100000000: [
-        { w:35, emoji:'🔁', name:'市場の因果逆転', desc:'上昇しやすい商品ほど暴落する。15秒間、upBiasが反転。', tier:'LARGE', apply: () => { gachaState.causalInversion = 15; } },
-        { w:35, emoji:'⏸️', name:'価格凍結（時間停止）', desc:'全商品の価格更新が10秒間完全に停止する。', tier:'LARGE', apply: () => { gachaState.priceFrozen = 10; } },
-        { w:30, emoji:'🏢', name:'マンションボーナス即時発動', desc:'高級マンションの保持ボーナスが即座に2倍発動！', tier:'LARGE', apply: () => {
-            if (ITEMS.mansion.hold > 0) {
-                holdBonusState.mansion.holdStartTime = Date.now() - ITEMS.mansion.holdBonus.seconds * 1000;
-            }
-        }},
+        { w:35, emoji:'💴', name:'所持金 +5億円', desc:'5億円が即入金。', tier:'LARGE',
+          apply: () => { cash += 500000000; updateDisplay(); } },
+        { w:25, emoji:'💰', name:'所持金 +20億円', desc:'20億円が降ってくる！', tier:'LARGE',
+          apply: () => { cash += 2000000000; updateDisplay(); } },
+        { w:20, emoji:'🎰', name:'所持金 ×50', desc:'伝説級！所持金が50倍！', tier:'LARGE',
+          apply: () => { cash *= 50; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −1億円', desc:'ハズレ。1億円消えた。', tier:'LARGE',
+          apply: () => { cash = Math.max(0, cash - 100000000); updateDisplay(); } },
+        { w:5,  emoji:'💀', name:'所持金 ÷10', desc:'壊滅的ハズレ。所持金が10分の1に…', tier:'LARGE',
+          apply: () => { cash = Math.floor(cash / 10); updateDisplay(); } },
     ],
+    // ─── 10億円ガチャ ──────────────────────────────
     1000000000: [
-        { w:33, emoji:'🌌', name:'宇宙規模の因果逆転', desc:'全商品のupBiasが完全反転。暴騰が暴落に、暴落が暴騰に。30秒間。', tier:'LEGEND', apply: () => { gachaState.causalInversion = 30; } },
-        { w:33, emoji:'⏳', name:'時空凍結・最大規模', desc:'全商品の価格更新が25秒間停止。この間に全売りで逃げろ！', tier:'LEGEND', apply: () => { gachaState.priceFrozen = 25; } },
-        { w:34, emoji:'🔮', name:'全シナジー反転', desc:'シナジーがすべて逆効果に。×5が÷5、×2が÷2になる。20秒間。', tier:'LEGEND', apply: () => { gachaState.synergyInverted = 20; } },
+        { w:30, emoji:'💴', name:'所持金 +50億円', desc:'50億円が即入金。', tier:'LEGEND',
+          apply: () => { cash += 5000000000; updateDisplay(); } },
+        { w:25, emoji:'💰', name:'所持金 +200億円', desc:'200億円が降り注ぐ！', tier:'LEGEND',
+          apply: () => { cash += 20000000000; updateDisplay(); } },
+        { w:20, emoji:'🎰', name:'所持金 ×100', desc:'神話級！所持金が100倍！！', tier:'LEGEND',
+          apply: () => { cash *= 100; updateDisplay(); } },
+        { w:15, emoji:'📉', name:'所持金 −10億円', desc:'ハズレ。10億円消えた。', tier:'LEGEND',
+          apply: () => { cash = Math.max(0, cash - 1000000000); updateDisplay(); } },
+        { w:10, emoji:'💀', name:'所持金 ÷100', desc:'伝説的ハズレ。所持金が100分の1に…', tier:'LEGEND',
+          apply: () => { cash = Math.floor(cash / 100); updateDisplay(); } },
     ],
 };
 
@@ -1281,6 +1449,37 @@ function updateGachaButtons() {
         const btn = document.getElementById(ids[i]);
         if (btn) btn.disabled = !gameRunning || cash < c;
     });
+}
+
+
+
+// ============================================================
+//  TRADE BUTTONS — 全買・全売の活性/非活性を更新
+// ============================================================
+function updateTradeButtons() {
+    Object.keys(ITEMS).forEach(key => {
+        const item = ITEMS[key];
+        const row = document.getElementById('row-market-' + key);
+        if (!row) return;
+        const btns = row.querySelectorAll('.btn-trade');
+        const buyBtn  = btns[0];
+        const sellBtn = btns[1];
+        if (buyBtn)  buyBtn.disabled  = cash < item.price;
+        if (sellBtn) sellBtn.disabled = item.hold <= 0;
+    });
+}
+
+// ============================================================
+//  GACHA TICK — 毎秒カウントダウン
+// ============================================================
+function tickGachaEffects() {
+    ['volatilityBoost', 'upBiasBoost', 'causalInversion', 'synergyInverted'].forEach(k => {
+        if (gachaState[k] > 0) gachaState[k]--;
+    });
+    if (gachaState.reverseTrendTicks > 0) {
+        gachaState.reverseTrendTicks--;
+        if (gachaState.reverseTrendTicks <= 0) gachaState.reverseTrendItem = null;
+    }
 }
 
 // ============================================================
